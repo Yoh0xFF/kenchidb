@@ -1,4 +1,4 @@
-# Kenchi
+# KenchiDB
 
 <p align="center">
   <img alt="pic" src="https://imgs.xkcd.com/comics/standards_2x.png" />
