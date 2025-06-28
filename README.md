@@ -6,4 +6,4 @@
 
 ## Description
 
-Trying some random ideas
+Learning database theory and Rust, trying some random ideas...
