@@ -1,20 +1,4 @@
-use std::io;
-
-// Error types
-#[derive(Debug)]
-pub enum DatabaseError {
-    IoError(io::Error),
-    SchemaViolation(String),
-    InvalidData(String),
-    DocumentNotFound(u64),
-    InvalidQuery(String),
-}
-
-impl From<io::Error> for DatabaseError {
-    fn from(error: io::Error) -> Self {
-        DatabaseError::IoError(error)
-    }
-}
+use crate::error::DatabaseError;
 
 // Core primitive types for the database
 #[derive(Debug, Clone, PartialEq)]
@@ -25,7 +9,7 @@ pub enum Value {
     Long(i64),
     Float(f32),
     Double(f64),
-    Bool(bool),
+    Boolean(bool),
     String(String), // Max 255 UTF-8 characters
     NullableByte(bool, u8),
     NullableShort(bool, i16),
@@ -33,7 +17,7 @@ pub enum Value {
     NullableLong(bool, i64),
     NullableFloat(bool, f32),
     NullableDouble(bool, f64),
-    NullableBool(bool, bool),
+    NullableBoolean(bool, bool),
 }
 
 impl Value {
@@ -45,7 +29,7 @@ impl Value {
             Value::Long(_) => "long",
             Value::Float(_) => "float",
             Value::Double(_) => "double",
-            Value::Bool(_) => "bool",
+            Value::Boolean(_) => "boolean",
             Value::String(_) => "string",
             Value::NullableByte(_, _) => "nullable_byte",
             Value::NullableShort(_, _) => "nullable_short",
@@ -53,7 +37,7 @@ impl Value {
             Value::NullableLong(_, _) => "nullable_long",
             Value::NullableFloat(_, _) => "nullable_float",
             Value::NullableDouble(_, _) => "nullable_double",
-            Value::NullableBool(_, _) => "nullable_bool",
+            Value::NullableBoolean(_, _) => "nullable_boolean",
         }
     }
 
@@ -85,7 +69,7 @@ impl Value {
                 bytes.extend_from_slice(&value.to_le_bytes());
                 bytes
             }
-            Value::Bool(value) => vec![6, if *value { 1 } else { 0 }],
+            Value::Boolean(value) => vec![6, if *value { 1 } else { 0 }],
             Value::String(value) => {
                 if value.chars().count() > 255 {
                     panic!(
@@ -126,7 +110,7 @@ impl Value {
                 bytes.extend_from_slice(&value.to_le_bytes());
                 bytes
             }
-            Value::NullableBool(has_value, value) => vec![
+            Value::NullableBoolean(has_value, value) => vec![
                 14,
                 if *has_value { 1 } else { 0 },
                 if *value { 1 } else { 0 },
@@ -203,7 +187,7 @@ impl Value {
                         "Incomplete boolean value".to_string(),
                     ));
                 }
-                Ok((Value::Bool(bytes[1] != 0), 2))
+                Ok((Value::Boolean(bytes[1] != 0), 2))
             }
             7 => {
                 if bytes.len() < 2 {
@@ -285,7 +269,7 @@ impl Value {
                         "Incomplete nullable boolean value".to_string(),
                     ));
                 }
-                Ok((Value::NullableBool(bytes[1] != 0, bytes[2] != 0), 3))
+                Ok((Value::NullableBoolean(bytes[1] != 0, bytes[2] != 0), 3))
             }
             _ => Err(DatabaseError::InvalidData(format!(
                 "Unknown type tag: {}",
