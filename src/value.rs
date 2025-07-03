@@ -1,6 +1,65 @@
 use crate::error::DatabaseError;
 
-// Core primitive types for the database
+/**
+ * Type IDs for the database value types.
+ */
+const TYPE_BYTE_ID: u8 = 0;
+const TYPE_SHORT_ID: u8 = 1;
+const TYPE_INT_ID: u8 = 2;
+const TYPE_LONG_ID: u8 = 3;
+const TYPE_FLOAT_ID: u8 = 4;
+const TYPE_DOUBLE_ID: u8 = 5;
+const TYPE_BOOLEAN_ID: u8 = 6;
+const TYPE_STRING_ID: u8 = 7;
+const TYPE_NULLABLE_BYTE_ID: u8 = 8;
+const TYPE_NULLABLE_SHORT_ID: u8 = 9;
+const TYPE_NULLABLE_INT_ID: u8 = 10;
+const TYPE_NULLABLE_LONG_ID: u8 = 11;
+const TYPE_NULLABLE_FLOAT_ID: u8 = 12;
+const TYPE_NULLABLE_DOUBLE_ID: u8 = 13;
+const TYPE_NULLABLE_BOOLEAN_ID: u8 = 14;
+
+/**
+ * Size of the database value types.
+ */
+const TYPE_BYTE_SIZE: usize = 2; // type_id + value
+const TYPE_SHORT_SIZE: usize = 3; // type_id + 2 bytes
+const TYPE_INT_SIZE: usize = 5; // type_id + 4 bytes
+const TYPE_LONG_SIZE: usize = 9; // type_id + 8 bytes
+const TYPE_FLOAT_SIZE: usize = 5; // type_id + 4 bytes
+const TYPE_DOUBLE_SIZE: usize = 9; // type_id + 8 bytes
+const TYPE_BOOLEAN_SIZE: usize = 2; // type_id + 1 byte
+const TYPE_STRING_SIZE: usize = 256; // type_id + 1 byte + 255 bytes
+const TYPE_NULLABLE_BYTE_SIZE: usize = 3; // type_id + null_flag + value
+const TYPE_NULLABLE_SHORT_SIZE: usize = 4; // type_id + null_flag + 2 bytes
+const TYPE_NULLABLE_INT_SIZE: usize = 6; // type_id + null_flag + 4 bytes
+const TYPE_NULLABLE_LONG_SIZE: usize = 10; // type_id + null_flag + 8 bytes
+const TYPE_NULLABLE_FLOAT_SIZE: usize = 6; // type_id + null_flag + 4 bytes
+const TYPE_NULLABLE_DOUBLE_SIZE: usize = 10; // type_id + null_flag + 8 bytes
+const TYPE_NULLABLE_BOOLEAN_SIZE: usize = 3; // type_id + null_flag + 1 byte
+
+/**
+ * Names for the database value types.
+ */
+const TYPE_BYTE_NAME: &str = "byte";
+const TYPE_SHORT_NAME: &str = "short";
+const TYPE_INT_NAME: &str = "int";
+const TYPE_LONG_NAME: &str = "long";
+const TYPE_FLOAT_NAME: &str = "float";
+const TYPE_DOUBLE_NAME: &str = "double";
+const TYPE_BOOLEAN_NAME: &str = "boolean";
+const TYPE_STRING_NAME: &str = "string";
+const TYPE_NULLABLE_BYTE_NAME: &str = "nullable_byte";
+const TYPE_NULLABLE_SHORT_NAME: &str = "nullable_short";
+const TYPE_NULLABLE_INT_NAME: &str = "nullable_int";
+const TYPE_NULLABLE_LONG_NAME: &str = "nullable_long";
+const TYPE_NULLABLE_FLOAT_NAME: &str = "nullable_float";
+const TYPE_NULLABLE_DOUBLE_NAME: &str = "nullable_double";
+const TYPE_NULLABLE_BOOLEAN_NAME: &str = "nullable_boolean";
+
+/**
+ * Core primitive types for the database.
+ */
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
     Byte(u8),
@@ -21,100 +80,99 @@ pub enum Value {
 }
 
 impl Value {
-    pub fn get_type_name(&self) -> &'static str {
+    /**
+     * Get the type ID for the value.
+     */
+    pub fn type_id(&self) -> u8 {
         match self {
-            Value::Byte(_) => "byte",
-            Value::Short(_) => "short",
-            Value::Int(_) => "int",
-            Value::Long(_) => "long",
-            Value::Float(_) => "float",
-            Value::Double(_) => "double",
-            Value::Boolean(_) => "boolean",
-            Value::String(_) => "string",
-            Value::NullableByte(_, _) => "nullable_byte",
-            Value::NullableShort(_, _) => "nullable_short",
-            Value::NullableInt(_, _) => "nullable_int",
-            Value::NullableLong(_, _) => "nullable_long",
-            Value::NullableFloat(_, _) => "nullable_float",
-            Value::NullableDouble(_, _) => "nullable_double",
-            Value::NullableBoolean(_, _) => "nullable_boolean",
+            Value::Byte(_) => TYPE_BYTE_ID,
+            Value::Short(_) => TYPE_SHORT_ID,
+            Value::Int(_) => TYPE_INT_ID,
+            Value::Long(_) => TYPE_LONG_ID,
+            Value::Float(_) => TYPE_FLOAT_ID,
+            Value::Double(_) => TYPE_DOUBLE_ID,
+            Value::Boolean(_) => TYPE_BOOLEAN_ID,
+            Value::String(_) => TYPE_STRING_ID,
+            Value::NullableByte(_, _) => TYPE_NULLABLE_BYTE_ID,
+            Value::NullableShort(_, _) => TYPE_NULLABLE_SHORT_ID,
+            Value::NullableInt(_, _) => TYPE_NULLABLE_INT_ID,
+            Value::NullableLong(_, _) => TYPE_NULLABLE_LONG_ID,
+            Value::NullableFloat(_, _) => TYPE_NULLABLE_FLOAT_ID,
+            Value::NullableDouble(_, _) => TYPE_NULLABLE_DOUBLE_ID,
+            Value::NullableBoolean(_, _) => TYPE_NULLABLE_BOOLEAN_ID,
         }
     }
 
+    /**
+     * Get the size of the value.
+     */
+    pub fn type_size(&self) -> usize {
+        match self {
+            Value::Byte(_) => TYPE_BYTE_SIZE,
+            Value::Short(_) => TYPE_SHORT_SIZE,
+            Value::Int(_) => TYPE_INT_SIZE,
+            Value::Long(_) => TYPE_LONG_SIZE,
+            Value::Float(_) => TYPE_FLOAT_SIZE,
+            Value::Double(_) => TYPE_DOUBLE_SIZE,
+            Value::Boolean(_) => TYPE_BOOLEAN_SIZE,
+            Value::String(_) => TYPE_STRING_SIZE,
+            Value::NullableByte(_, _) => TYPE_NULLABLE_BYTE_SIZE,
+            Value::NullableShort(_, _) => TYPE_NULLABLE_SHORT_SIZE,
+            Value::NullableInt(_, _) => TYPE_NULLABLE_INT_SIZE,
+            Value::NullableLong(_, _) => TYPE_NULLABLE_LONG_SIZE,
+            Value::NullableFloat(_, _) => TYPE_NULLABLE_FLOAT_SIZE,
+            Value::NullableDouble(_, _) => TYPE_NULLABLE_DOUBLE_SIZE,
+            Value::NullableBoolean(_, _) => TYPE_NULLABLE_BOOLEAN_SIZE,
+        }
+    }
+
+    /**
+     * Get the name of the value type.
+     */
+    pub fn type_name(&self) -> &'static str {
+        match self {
+            Value::Byte(_) => TYPE_BYTE_NAME,
+            Value::Short(_) => TYPE_SHORT_NAME,
+            Value::Int(_) => TYPE_INT_NAME,
+            Value::Long(_) => TYPE_LONG_NAME,
+            Value::Float(_) => TYPE_FLOAT_NAME,
+            Value::Double(_) => TYPE_DOUBLE_NAME,
+            Value::Boolean(_) => TYPE_BOOLEAN_NAME,
+            Value::String(_) => TYPE_STRING_NAME,
+            Value::NullableByte(_, _) => TYPE_NULLABLE_BYTE_NAME,
+            Value::NullableShort(_, _) => TYPE_NULLABLE_SHORT_NAME,
+            Value::NullableInt(_, _) => TYPE_NULLABLE_INT_NAME,
+            Value::NullableLong(_, _) => TYPE_NULLABLE_LONG_NAME,
+            Value::NullableFloat(_, _) => TYPE_NULLABLE_FLOAT_NAME,
+            Value::NullableDouble(_, _) => TYPE_NULLABLE_DOUBLE_NAME,
+            Value::NullableBoolean(_, _) => TYPE_NULLABLE_BOOLEAN_NAME,
+        }
+    }
+
+    /**
+     * Serialize the value to a byte array.
+     */
     pub fn serialize(&self) -> Vec<u8> {
         match self {
-            Value::Byte(value) => vec![0, *value],
-            Value::Short(value) => {
-                let mut bytes = vec![1];
-                bytes.extend_from_slice(&value.to_le_bytes());
-                bytes
-            }
-            Value::Int(value) => {
-                let mut bytes = vec![2];
-                bytes.extend_from_slice(&value.to_le_bytes());
-                bytes
-            }
-            Value::Long(value) => {
-                let mut bytes = vec![3];
-                bytes.extend_from_slice(&value.to_le_bytes());
-                bytes
-            }
-            Value::Float(value) => {
-                let mut bytes = vec![4];
-                bytes.extend_from_slice(&value.to_le_bytes());
-                bytes
-            }
-            Value::Double(value) => {
-                let mut bytes = vec![5];
-                bytes.extend_from_slice(&value.to_le_bytes());
-                bytes
-            }
-            Value::Boolean(value) => vec![6, if *value { 1 } else { 0 }],
-            Value::String(value) => {
-                if value.chars().count() > 255 {
-                    panic!(
-                        "String too long: {} characters (max 255)",
-                        value.chars().count()
-                    );
-                }
-                let utf8_bytes = value.as_bytes();
-                let mut bytes = vec![7, utf8_bytes.len() as u8];
-                bytes.extend_from_slice(utf8_bytes);
-                bytes
-            }
-            Value::NullableByte(has_value, value) => {
-                vec![8, *value, if *has_value { 1 } else { 0 }]
-            }
-            Value::NullableShort(has_value, value) => {
-                let mut bytes = vec![9, if *has_value { 1 } else { 0 }];
-                bytes.extend_from_slice(&value.to_le_bytes());
-                bytes
-            }
-            Value::NullableInt(has_value, value) => {
-                let mut bytes = vec![10, if *has_value { 1 } else { 0 }];
-                bytes.extend_from_slice(&value.to_le_bytes());
-                bytes
-            }
-            Value::NullableLong(has_value, value) => {
-                let mut bytes = vec![11, if *has_value { 1 } else { 0 }];
-                bytes.extend_from_slice(&value.to_le_bytes());
-                bytes
-            }
-            Value::NullableFloat(has_value, value) => {
-                let mut bytes = vec![12, if *has_value { 1 } else { 0 }];
-                bytes.extend_from_slice(&value.to_le_bytes());
-                bytes
-            }
+            Value::Byte(value) => serialize_byte(*value),
+            Value::Short(value) => serialize_short(*value),
+            Value::Int(value) => serialize_int(*value),
+            Value::Long(value) => serialize_long(*value),
+            Value::Float(value) => serialize_float(*value),
+            Value::Double(value) => serialize_double(*value),
+            Value::Boolean(value) => serialize_boolean(*value),
+            Value::String(value) => serialize_string(value),
+            Value::NullableByte(has_value, value) => serialize_nullable_byte(*has_value, *value),
+            Value::NullableShort(has_value, value) => serialize_nullable_short(*has_value, *value),
+            Value::NullableInt(has_value, value) => serialize_nullable_int(*has_value, *value),
+            Value::NullableLong(has_value, value) => serialize_nullable_long(*has_value, *value),
+            Value::NullableFloat(has_value, value) => serialize_nullable_float(*has_value, *value),
             Value::NullableDouble(has_value, value) => {
-                let mut bytes = vec![13, if *has_value { 1 } else { 0 }];
-                bytes.extend_from_slice(&value.to_le_bytes());
-                bytes
+                serialize_nullable_double(*has_value, *value)
             }
-            Value::NullableBoolean(has_value, value) => vec![
-                14,
-                if *has_value { 1 } else { 0 },
-                if *value { 1 } else { 0 },
-            ],
+            Value::NullableBoolean(has_value, value) => {
+                serialize_nullable_boolean(*has_value, *value)
+            }
         }
     }
 
@@ -124,157 +182,284 @@ impl Value {
         }
 
         match bytes[0] {
-            0 => {
-                if bytes.len() < 2 {
-                    return Err(DatabaseError::InvalidData(
-                        "Incomplete byte value".to_string(),
-                    ));
-                }
-                Ok((Value::Byte(bytes[1]), 2))
-            }
-            1 => {
-                if bytes.len() < 3 {
-                    return Err(DatabaseError::InvalidData(
-                        "Incomplete short value".to_string(),
-                    ));
-                }
-                let value = i16::from_le_bytes([bytes[1], bytes[2]]);
-                Ok((Value::Short(value), 3))
-            }
-            2 => {
-                if bytes.len() < 5 {
-                    return Err(DatabaseError::InvalidData(
-                        "Incomplete int value".to_string(),
-                    ));
-                }
-                let value = i32::from_le_bytes([bytes[1], bytes[2], bytes[3], bytes[4]]);
-                Ok((Value::Int(value), 5))
-            }
-            3 => {
-                if bytes.len() < 9 {
-                    return Err(DatabaseError::InvalidData(
-                        "Incomplete long value".to_string(),
-                    ));
-                }
-                let mut array = [0u8; 8];
-                array.copy_from_slice(&bytes[1..9]);
-                let value = i64::from_le_bytes(array);
-                Ok((Value::Long(value), 9))
-            }
-            4 => {
-                if bytes.len() < 5 {
-                    return Err(DatabaseError::InvalidData(
-                        "Incomplete float value".to_string(),
-                    ));
-                }
-                let value = f32::from_le_bytes([bytes[1], bytes[2], bytes[3], bytes[4]]);
-                Ok((Value::Float(value), 5))
-            }
-            5 => {
-                if bytes.len() < 9 {
-                    return Err(DatabaseError::InvalidData(
-                        "Incomplete double value".to_string(),
-                    ));
-                }
-                let mut array = [0u8; 8];
-                array.copy_from_slice(&bytes[1..9]);
-                let value = f64::from_le_bytes(array);
-                Ok((Value::Double(value), 9))
-            }
-            6 => {
-                if bytes.len() < 2 {
-                    return Err(DatabaseError::InvalidData(
-                        "Incomplete boolean value".to_string(),
-                    ));
-                }
-                Ok((Value::Boolean(bytes[1] != 0), 2))
-            }
-            7 => {
-                if bytes.len() < 2 {
-                    return Err(DatabaseError::InvalidData(
-                        "Incomplete string length".to_string(),
-                    ));
-                }
-                let len = bytes[1] as usize;
-                if bytes.len() < 2 + len {
-                    return Err(DatabaseError::InvalidData(
-                        "Incomplete string data".to_string(),
-                    ));
-                }
-                let string_bytes = &bytes[2..2 + len];
-                let value = String::from_utf8(string_bytes.to_vec())
-                    .map_err(|e| DatabaseError::InvalidData(format!("Invalid UTF-8: {}", e)))?;
-                Ok((Value::String(value), 2 + len))
-            }
-            8 => {
-                if bytes.len() < 3 {
-                    return Err(DatabaseError::InvalidData(
-                        "Incomplete nullable byte value".to_string(),
-                    ));
-                }
-                Ok((Value::NullableByte(bytes[1] != 0, bytes[2]), 3))
-            }
-            9 => {
-                if bytes.len() < 4 {
-                    return Err(DatabaseError::InvalidData(
-                        "Incomplete nullable short value".to_string(),
-                    ));
-                }
-                let value = i16::from_le_bytes([bytes[2], bytes[3]]);
-                Ok((Value::NullableShort(bytes[1] != 0, value), 4))
-            }
-            10 => {
-                if bytes.len() < 6 {
-                    return Err(DatabaseError::InvalidData(
-                        "Incomplete nullable int value".to_string(),
-                    ));
-                }
-                let value = i32::from_le_bytes([bytes[2], bytes[3], bytes[4], bytes[5]]);
-                Ok((Value::NullableInt(bytes[1] != 0, value), 6))
-            }
-            11 => {
-                if bytes.len() < 10 {
-                    return Err(DatabaseError::InvalidData(
-                        "Incomplete nullable long value".to_string(),
-                    ));
-                }
-                let mut array = [0u8; 8];
-                array.copy_from_slice(&bytes[2..10]);
-                let value = i64::from_le_bytes(array);
-                Ok((Value::NullableLong(bytes[1] != 0, value), 10))
-            }
-            12 => {
-                if bytes.len() < 6 {
-                    return Err(DatabaseError::InvalidData(
-                        "Incomplete nullable float value".to_string(),
-                    ));
-                }
-                let value = f32::from_le_bytes([bytes[2], bytes[3], bytes[4], bytes[5]]);
-                Ok((Value::NullableFloat(bytes[1] != 0, value), 6))
-            }
-            13 => {
-                if bytes.len() < 10 {
-                    return Err(DatabaseError::InvalidData(
-                        "Incomplete nullable double value".to_string(),
-                    ));
-                }
-                let mut array = [0u8; 8];
-                array.copy_from_slice(&bytes[2..10]);
-                let value = f64::from_le_bytes(array);
-                Ok((Value::NullableDouble(bytes[1] != 0, value), 10))
-            }
-            14 => {
-                if bytes.len() < 3 {
-                    return Err(DatabaseError::InvalidData(
-                        "Incomplete nullable boolean value".to_string(),
-                    ));
-                }
-                Ok((Value::NullableBoolean(bytes[1] != 0, bytes[2] != 0), 3))
-            }
+            TYPE_BYTE_ID => deserialize_byte(bytes),
+            TYPE_SHORT_ID => deserialize_short(bytes),
+            TYPE_INT_ID => deserialize_int(bytes),
+            TYPE_LONG_ID => deserialize_long(bytes),
+            TYPE_FLOAT_ID => deserialize_float(bytes),
+            TYPE_DOUBLE_ID => deserialize_double(bytes),
+            TYPE_BOOLEAN_ID => deserialize_boolean(bytes),
+            TYPE_STRING_ID => deserialize_string(bytes),
+            TYPE_NULLABLE_BYTE_ID => deserialize_nullable_byte(bytes),
+            TYPE_NULLABLE_SHORT_ID => deserialize_nullable_short(bytes),
+            TYPE_NULLABLE_INT_ID => deserialize_nullable_int(bytes),
+            TYPE_NULLABLE_LONG_ID => deserialize_nullable_long(bytes),
+            TYPE_NULLABLE_FLOAT_ID => deserialize_nullable_float(bytes),
+            TYPE_NULLABLE_DOUBLE_ID => deserialize_nullable_double(bytes),
+            TYPE_NULLABLE_BOOLEAN_ID => deserialize_nullable_boolean(bytes),
             _ => Err(DatabaseError::InvalidData(format!(
                 "Unknown type tag: {}",
                 bytes[0]
             ))),
         }
     }
+}
+
+/**
+ * Serialize values to bytes.
+ */
+#[inline]
+fn serialize_byte(value: u8) -> Vec<u8> {
+    vec![TYPE_BYTE_ID, value]
+}
+
+#[inline]
+fn serialize_short(value: i16) -> Vec<u8> {
+    let mut bytes = vec![TYPE_SHORT_ID];
+    bytes.extend_from_slice(&value.to_le_bytes());
+    bytes
+}
+
+#[inline]
+fn serialize_int(value: i32) -> Vec<u8> {
+    let mut bytes = vec![TYPE_INT_ID];
+    bytes.extend_from_slice(&value.to_le_bytes());
+    bytes
+}
+
+#[inline]
+fn serialize_long(value: i64) -> Vec<u8> {
+    let mut bytes = vec![TYPE_LONG_ID];
+    bytes.extend_from_slice(&value.to_le_bytes());
+    bytes
+}
+
+#[inline]
+fn serialize_float(value: f32) -> Vec<u8> {
+    let mut bytes = vec![TYPE_FLOAT_ID];
+    bytes.extend_from_slice(&value.to_le_bytes());
+    bytes
+}
+
+#[inline]
+fn serialize_double(value: f64) -> Vec<u8> {
+    let mut bytes = vec![TYPE_DOUBLE_ID];
+    bytes.extend_from_slice(&value.to_le_bytes());
+    bytes
+}
+
+#[inline]
+fn serialize_boolean(value: bool) -> Vec<u8> {
+    vec![TYPE_BOOLEAN_ID, if value { 1 } else { 0 }]
+}
+
+#[inline]
+fn serialize_string(value: &str) -> Vec<u8> {
+    if value.chars().count() > 255 {
+        panic!(
+            "String too long: {} characters (max 255)",
+            value.chars().count()
+        );
+    }
+    let utf8_bytes = value.as_bytes();
+    let mut bytes = vec![TYPE_STRING_ID, utf8_bytes.len() as u8];
+    bytes.extend_from_slice(utf8_bytes);
+    bytes
+}
+
+#[inline]
+fn serialize_nullable_byte(has_value: bool, value: u8) -> Vec<u8> {
+    vec![TYPE_NULLABLE_BYTE_ID, if has_value { 1 } else { 0 }, value]
+}
+
+#[inline]
+fn serialize_nullable_short(has_value: bool, value: i16) -> Vec<u8> {
+    let mut bytes = vec![TYPE_NULLABLE_SHORT_ID, if has_value { 1 } else { 0 }];
+    bytes.extend_from_slice(&value.to_le_bytes());
+    bytes
+}
+
+#[inline]
+fn serialize_nullable_int(has_value: bool, value: i32) -> Vec<u8> {
+    let mut bytes = vec![TYPE_NULLABLE_INT_ID, if has_value { 1 } else { 0 }];
+    bytes.extend_from_slice(&value.to_le_bytes());
+    bytes
+}
+
+#[inline]
+fn serialize_nullable_long(has_value: bool, value: i64) -> Vec<u8> {
+    let mut bytes = vec![TYPE_NULLABLE_LONG_ID, if has_value { 1 } else { 0 }];
+    bytes.extend_from_slice(&value.to_le_bytes());
+    bytes
+}
+
+#[inline]
+fn serialize_nullable_float(has_value: bool, value: f32) -> Vec<u8> {
+    let mut bytes = vec![TYPE_NULLABLE_FLOAT_ID, if has_value { 1 } else { 0 }];
+    bytes.extend_from_slice(&value.to_le_bytes());
+    bytes
+}
+
+#[inline]
+fn serialize_nullable_double(has_value: bool, value: f64) -> Vec<u8> {
+    let mut bytes = vec![TYPE_NULLABLE_DOUBLE_ID, if has_value { 1 } else { 0 }];
+    bytes.extend_from_slice(&value.to_le_bytes());
+    bytes
+}
+
+#[inline]
+fn serialize_nullable_boolean(has_value: bool, value: bool) -> Vec<u8> {
+    vec![
+        TYPE_NULLABLE_BOOLEAN_ID,
+        if has_value { 1 } else { 0 },
+        if value { 1 } else { 0 },
+    ]
+}
+
+/**
+ * Deserialize bytes to values.
+ */
+#[inline]
+fn deserialize_byte(bytes: &[u8]) -> Result<(Value, usize), DatabaseError> {
+    if bytes.len() < TYPE_BYTE_SIZE {
+        return Err(DatabaseError::InvalidData("Incomplete byte value".to_string()));
+    }
+    Ok((Value::Byte(bytes[1]), TYPE_BYTE_SIZE))
+}
+
+#[inline]
+fn deserialize_short(bytes: &[u8]) -> Result<(Value, usize), DatabaseError> {
+    if bytes.len() < TYPE_SHORT_SIZE {
+        return Err(DatabaseError::InvalidData("Incomplete short value".to_string()));
+    }
+    let value = i16::from_le_bytes([bytes[1], bytes[2]]);
+    Ok((Value::Short(value), TYPE_SHORT_SIZE))
+}
+
+#[inline]
+fn deserialize_int(bytes: &[u8]) -> Result<(Value, usize), DatabaseError> {
+    if bytes.len() < TYPE_INT_SIZE {
+        return Err(DatabaseError::InvalidData("Incomplete int value".to_string()));
+    }
+    let value = i32::from_le_bytes([bytes[1], bytes[2], bytes[3], bytes[4]]);
+    Ok((Value::Int(value), TYPE_INT_SIZE))
+}
+
+#[inline]
+fn deserialize_long(bytes: &[u8]) -> Result<(Value, usize), DatabaseError> {
+    if bytes.len() < TYPE_LONG_SIZE {
+        return Err(DatabaseError::InvalidData("Incomplete long value".to_string()));
+    }
+    let mut array = [0u8; 8];
+    array.copy_from_slice(&bytes[1..9]);
+    let value = i64::from_le_bytes(array);
+    Ok((Value::Long(value), TYPE_LONG_SIZE))
+}
+
+#[inline]
+fn deserialize_float(bytes: &[u8]) -> Result<(Value, usize), DatabaseError> {
+    if bytes.len() < TYPE_FLOAT_SIZE {
+        return Err(DatabaseError::InvalidData("Incomplete float value".to_string()));
+    }
+    let value = f32::from_le_bytes([bytes[1], bytes[2], bytes[3], bytes[4]]);
+    Ok((Value::Float(value), TYPE_FLOAT_SIZE))
+}
+
+#[inline]
+fn deserialize_double(bytes: &[u8]) -> Result<(Value, usize), DatabaseError> {
+    if bytes.len() < TYPE_DOUBLE_SIZE {
+        return Err(DatabaseError::InvalidData("Incomplete double value".to_string()));
+    }
+    let mut array = [0u8; 8];
+    array.copy_from_slice(&bytes[1..9]);
+    let value = f64::from_le_bytes(array);
+    Ok((Value::Double(value), TYPE_DOUBLE_SIZE))
+}
+
+#[inline]
+fn deserialize_boolean(bytes: &[u8]) -> Result<(Value, usize), DatabaseError> {
+    if bytes.len() < TYPE_BOOLEAN_SIZE {
+        return Err(DatabaseError::InvalidData("Incomplete boolean value".to_string()));
+    }
+    Ok((Value::Boolean(bytes[1] != 0), TYPE_BOOLEAN_SIZE))
+}
+
+#[inline]
+fn deserialize_string(bytes: &[u8]) -> Result<(Value, usize), DatabaseError> {
+    if bytes.len() < TYPE_STRING_SIZE {
+        return Err(DatabaseError::InvalidData("Incomplete string length".to_string()));
+    }
+    let len = bytes[1] as usize;
+    if bytes.len() < 2 + len {
+        return Err(DatabaseError::InvalidData("Incomplete string data".to_string()));
+    }
+    let string_bytes = &bytes[2..2 + len];
+    let value = String::from_utf8(string_bytes.to_vec())
+        .map_err(|e| DatabaseError::InvalidData(format!("Invalid UTF-8: {}", e)))?;
+    Ok((Value::String(value), 2 + len))
+}
+
+#[inline]
+fn deserialize_nullable_byte(bytes: &[u8]) -> Result<(Value, usize), DatabaseError> {
+    if bytes.len() < TYPE_NULLABLE_BYTE_SIZE {
+        return Err(DatabaseError::InvalidData("Incomplete nullable byte value".to_string()));
+    }
+    Ok((Value::NullableByte(bytes[1] != 0, bytes[2]), TYPE_NULLABLE_BYTE_SIZE))
+}
+
+#[inline]
+fn deserialize_nullable_short(bytes: &[u8]) -> Result<(Value, usize), DatabaseError> {
+    if bytes.len() < TYPE_NULLABLE_SHORT_SIZE {
+        return Err(DatabaseError::InvalidData("Incomplete nullable short value".to_string()));
+    }
+    let value = i16::from_le_bytes([bytes[2], bytes[3]]);
+    Ok((Value::NullableShort(bytes[1] != 0, value), TYPE_NULLABLE_SHORT_SIZE))
+}
+
+#[inline]
+fn deserialize_nullable_int(bytes: &[u8]) -> Result<(Value, usize), DatabaseError> {
+    if bytes.len() < TYPE_NULLABLE_INT_SIZE {
+        return Err(DatabaseError::InvalidData("Incomplete nullable int value".to_string()));
+    }
+    let value = i32::from_le_bytes([bytes[2], bytes[3], bytes[4], bytes[5]]);
+    Ok((Value::NullableInt(bytes[1] != 0, value), TYPE_NULLABLE_INT_SIZE))
+}
+
+#[inline]
+fn deserialize_nullable_long(bytes: &[u8]) -> Result<(Value, usize), DatabaseError> {
+    if bytes.len() < TYPE_NULLABLE_LONG_SIZE {
+        return Err(DatabaseError::InvalidData("Incomplete nullable long value".to_string()));
+    }
+    let mut array = [0u8; 8];
+    array.copy_from_slice(&bytes[2..10]);
+    let value = i64::from_le_bytes(array);
+    Ok((Value::NullableLong(bytes[1] != 0, value), TYPE_NULLABLE_LONG_SIZE))
+}
+
+#[inline]
+fn deserialize_nullable_float(bytes: &[u8]) -> Result<(Value, usize), DatabaseError> {
+    if bytes.len() < TYPE_NULLABLE_FLOAT_SIZE {
+        return Err(DatabaseError::InvalidData("Incomplete nullable float value".to_string()));
+    }
+    let value = f32::from_le_bytes([bytes[2], bytes[3], bytes[4], bytes[5]]);
+    Ok((Value::NullableFloat(bytes[1] != 0, value), TYPE_NULLABLE_FLOAT_SIZE))
+}
+
+#[inline]
+fn deserialize_nullable_double(bytes: &[u8]) -> Result<(Value, usize), DatabaseError> {
+    if bytes.len() < TYPE_NULLABLE_DOUBLE_SIZE {
+        return Err(DatabaseError::InvalidData("Incomplete nullable double value".to_string()));
+    }
+    let mut array = [0u8; 8];
+    array.copy_from_slice(&bytes[2..10]);
+    let value = f64::from_le_bytes(array);
+    Ok((Value::NullableDouble(bytes[1] != 0, value), TYPE_NULLABLE_DOUBLE_SIZE))
+}
+
+#[inline]
+fn deserialize_nullable_boolean(bytes: &[u8]) -> Result<(Value, usize), DatabaseError> {
+    if bytes.len() < TYPE_NULLABLE_BOOLEAN_SIZE {
+        return Err(DatabaseError::InvalidData("Incomplete nullable boolean value".to_string()));
+    }
+    Ok((Value::NullableBoolean(bytes[1] != 0, bytes[2] != 0), TYPE_NULLABLE_BOOLEAN_SIZE))
 }

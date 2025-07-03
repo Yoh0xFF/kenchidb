@@ -57,7 +57,7 @@ impl Schema {
                     if !field.field_type.validates(value) {
                         return Err(DatabaseError::SchemaViolation(
                             format!("Field '{}' has wrong type. Expected {:?}, got {}",
-                                field.name, field.field_type, value.get_type_name())
+                                field.name, field.field_type, value.type_name())
                         ));
                     }
                 }
