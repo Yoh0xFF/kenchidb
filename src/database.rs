@@ -4,10 +4,10 @@ use crate::{error::DatabaseError, schema::{Document, Schema}, value::Value};
 
 // Collection - stores documents with a specific schema
 pub struct Collection {
-    pub(super) schema: Schema,
-    pub(super) documents: HashMap<u64, Document>,
-    pub(super) next_id: u64,
-    pub(super) file: Option<File>,
+    pub schema: Schema,
+    pub documents: HashMap<u64, Document>,
+    pub next_id: u64,
+    pub file: Option<File>,
 }
 
 impl Collection {
@@ -156,7 +156,7 @@ impl Collection {
     }
 
     fn deserialize(bytes: &[u8], schema: Schema) -> Result<Self, DatabaseError> {
-        let mut offset = 0;
+        let mut offset: usize;
 
         if bytes.len() < 12 {
             return Err(DatabaseError::InvalidData("File too short".to_string()));
@@ -201,7 +201,7 @@ impl Collection {
     }
 
     fn deserialize_document(bytes: &[u8]) -> Result<Document, DatabaseError> {
-        let mut offset = 0;
+        let mut offset: usize;
 
         if bytes.len() < 12 {
             return Err(DatabaseError::InvalidData("Document data too short".to_string()));

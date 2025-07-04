@@ -3,13 +3,6 @@ use std::collections::HashMap;
 use crate::{error::DatabaseError, value::Value};
 
 // Schema definition for type safety
-#[derive(Debug, Clone)]
-pub struct Field {
-    pub name: String,
-    pub field_type: FieldType,
-    pub nullable: bool,
-}
-
 #[derive(Debug, Clone, PartialEq)]
 pub enum FieldType {
     Byte,
@@ -36,6 +29,13 @@ impl FieldType {
             _ => false,
         }
     }
+}
+
+#[derive(Debug, Clone)]
+pub struct Field {
+    pub name: String,
+    pub field_type: FieldType,
+    pub nullable: bool,
 }
 
 #[derive(Debug, Clone)]
