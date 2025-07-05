@@ -6,4 +6,5 @@
 
 ## Description
 
+Strongly typed embedded document database.
 Learning database theory and Rust, trying some random ideas...

@@ -18,7 +18,7 @@ define_schema! {
 }
 
 fn main() -> Result<(), DatabaseError> {
-    println!("🗄️  Kenchi Database Demo");
+    println!("🗄️  KenchiDB Demo");
 
     // Create database
     let mut db = Database::new();
