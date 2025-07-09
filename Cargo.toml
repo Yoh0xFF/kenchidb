@@ -1,7 +1,16 @@
 [package]
-name = "kenchidb"
+name = "KenchiDB"
 version = "0.1.0"
 edition = "2024"
+authors = ["Ioram Gordadze <Yoh0xFF@gmail.com>"]
+license = "MIT"
+description = "Strongly typed embedded document database"
+repository = "https://github.com/yoh0xff/kenchidb"
+homepage = "https://github.com/yoh0xff/kenchidb"
+documentation = "https://github.com/yoh0xff/kenchidb"
+readme = "README.md"
+keywords = ["database", "embedded", "document", "nosql", "storage"]
+categories = ["database-implementations", "embedded"]
 
 [dependencies]
 

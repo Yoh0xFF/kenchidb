@@ -3,5 +3,5 @@
 version = 4
 
 [[package]]
-name = "kenchidb"
+name = "KenchiDB"
 version = "0.1.0"
