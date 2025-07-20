@@ -5,6 +5,7 @@ mod error;
 mod macros;
 mod schema;
 mod value;
+mod storage;
 
 define_schema! {
     User {
