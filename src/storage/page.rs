@@ -241,8 +241,32 @@ impl Page {
     }
 
     /// Insert a record into the page, returns slot index if successful
-    pub fn insert_record() {
-        todo!()
+    pub fn insert_record(&mut self, record_data: &[u8]) -> Result<u16, DatabaseError> {
+        let record_size = record_data.len();
+        let slot_size = 4; // Each slot entry is 4 bytes
+
+        // Check if we have enough space (need spaced for data + slot entry)
+        if (self.header.free_space_size as usize) < record_size + slot_size {
+            return Err(DatabaseError::InvalidData("Not enough space in page".to_string()));
+        }
+
+        // Calculate where to place the new record (grows backwards from end)
+        let data_end = PAGE_SIZE - (self.slots.len() * slot_size);
+        let new_record_offset = data_end - record_size;
+
+        // Copy record data to page
+        let data_start_in_page = new_record_offset - PAGE_HEADER_SIZE;
+        self.data[data_start_in_page..data_start_in_page + record_size].copy_from_slice(record_data);
+
+        // Add slot entry
+        let slot_index = self.slots.len() as u16;
+        self.slots.push(SlotEntry { offset: new_record_offset as u16, length: record_size as u16 });
+
+        // Update header
+        self.header.record_count += 1;
+        self.header.free_space_size = self.header.free_space_size.saturating_sub((record_size + slot_size) as u16);
+
+        Ok(slot_index)
     }
 
     /// Get a record by slot index
