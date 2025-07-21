@@ -247,7 +247,9 @@ impl Page {
 
         // Check if we have enough space (need spaced for data + slot entry)
         if (self.header.free_space_size as usize) < record_size + slot_size {
-            return Err(DatabaseError::InvalidData("Not enough space in page".to_string()));
+            return Err(DatabaseError::InvalidData(
+                "Not enough space in page".to_string(),
+            ));
         }
 
         // Calculate where to place the new record (grows backwards from end)
@@ -256,46 +258,139 @@ impl Page {
 
         // Copy record data to page
         let data_start_in_page = new_record_offset - PAGE_HEADER_SIZE;
-        self.data[data_start_in_page..data_start_in_page + record_size].copy_from_slice(record_data);
+        self.data[data_start_in_page..data_start_in_page + record_size]
+            .copy_from_slice(record_data);
 
         // Add slot entry
         let slot_index = self.slots.len() as u16;
-        self.slots.push(SlotEntry { offset: new_record_offset as u16, length: record_size as u16 });
+        self.slots.push(SlotEntry {
+            offset: new_record_offset as u16,
+            length: record_size as u16,
+        });
 
         // Update header
         self.header.record_count += 1;
-        self.header.free_space_size = self.header.free_space_size.saturating_sub((record_size + slot_size) as u16);
+        self.header.free_space_size = self
+            .header
+            .free_space_size
+            .saturating_sub((record_size + slot_size) as u16);
 
         Ok(slot_index)
     }
 
     /// Get a record by slot index
-    pub fn get_record() {
-        todo!()
+    pub fn get_record(&self, slot_index: u16) -> Result<&[u8], DatabaseError> {
+        if (slot_index as usize) >= self.slots.len() {
+            return Err(DatabaseError::InvalidData("Invalid slot index".to_string()));
+        }
+
+        let slot = self.slots[slot_index as usize];
+        let data_start = slot.offset as usize - PAGE_HEADER_SIZE;
+        let data_end = data_start + slot.length as usize;
+
+        if data_end > self.data.len() {
+            return Err(DatabaseError::InvalidData(
+                "Record extends beyond page".to_string(),
+            ));
+        }
+
+        Ok(&self.data[data_start..data_end])
     }
 
     /// Calculate and update checksum for the page
-    pub fn update_checksum() {
-        todo!()
+    pub fn update_checksum(&mut self) {
+        // Simple checksum - sum of all data bytes
+        let mut checksum = 0u32;
+
+        // Include slot data in checksum
+        for slot in &self.slots {
+            let slot_bytes = slot.serialize();
+            for byte in slot_bytes {
+                checksum = checksum.wrapping_add(byte as u32);
+            }
+        }
+
+        // Include actual record data
+        for byte in &self.data {
+            checksum = checksum.wrapping_add(*byte as u32);
+        }
+
+        self.header.checksum = checksum;
     }
 
     /// Serialize entire page to bytes
-    pub fn serialize() {
-        todo!()
+    pub fn serialize(&mut self) -> [u8; PAGE_SIZE] {
+        let mut page_bytes = [0u8; PAGE_SIZE];
+
+        // Update checksum before serializing
+        self.update_checksum();
+
+        // Serialize header
+        let header_bytes = self.header.serialize();
+        page_bytes[0..PAGE_HEADER_SIZE].copy_from_slice(&header_bytes);
+
+        // Serialize slot directory (grows upward from header)
+        let mut slot_offset = PAGE_HEADER_SIZE;
+        for slot in &self.slots {
+            let slot_bytes = slot.serialize();
+            page_bytes[slot_offset..slot_offset + 4].copy_from_slice(&slot_bytes);
+            slot_offset += 4;
+        }
+
+        // Copy data section
+        page_bytes[PAGE_HEADER_SIZE..PAGE_HEADER_SIZE + self.data.len()]
+            .copy_from_slice(&self.data);
+
+        page_bytes
     }
 
     /// Deserialize page from bytes
-    pub fn deserialize() {
-        todo!()
+    pub fn deserialize(bytes: &[u8]) -> Result<Self, DatabaseError> {
+        if bytes.len() != PAGE_SIZE {
+            return Err(DatabaseError::InvalidData("Invalid page size".to_string()));
+        }
+
+        // Deserialize header
+        let header = PageHeader::deserialize(&bytes[0..PAGE_HEADER_SIZE])?;
+
+        // Deserialize slots
+        let mut slots: Vec<SlotEntry> = Vec::new();
+        let mut slot_offset = PAGE_HEADER_SIZE;
+
+        for _ in 0..header.record_count {
+            if slot_offset + 4 > bytes.len() {
+                return Err(DatabaseError::InvalidData("Invalid slot directory".to_string()));
+            }
+
+            let slot = SlotEntry::deserialize(&bytes[slot_offset..slot_offset + 4])?;
+            slots.push(slot);
+            slot_offset += 4;
+        }
+
+        // Copy data section
+        let mut data = vec![0u8; MAX_PAGE_DATA_SIZE];
+        data.copy_from_slice(&bytes[PAGE_HEADER_SIZE..PAGE_HEADER_SIZE + MAX_PAGE_DATA_SIZE]);
+
+        let page = Self {
+            header,
+            slots,
+            data,
+        };
+
+        // Verify checksum
+        // Note: In production, you'd want to verify the checksum here
+
+        Ok(page)
     }
 
     /// Get available free space in bytes
-    pub fn free_space() {
-        todo!()
+    pub fn free_space(&self) -> usize {
+        self.header.free_space_size as usize
     }
 
     /// Check if page can fit a record of given size
-    pub fn can_fit() {
-        todo!()
+    pub fn can_fit(&self, record_size: usize) -> bool {
+        let slot_size = 4;
+        (self.header.free_space_size as usize) >= record_size + slot_size
     }
 }
