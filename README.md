@@ -7,4 +7,8 @@
 ## Description
 
 Strongly typed embedded document database.
-Learning database theory and Rust, trying some random ideas...
+
+Must implement:
+- Paged storage engine;
+- B-Tree indexes;
+- WAL mode for transaction management;
