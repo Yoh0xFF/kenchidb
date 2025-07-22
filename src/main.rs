@@ -1,11 +1,10 @@
-use crate::{database::Database, error::DatabaseError};
+use crate::{common::DatabaseError, database::Database};
 
 mod database;
-mod error;
+mod common;
 mod macros;
-mod schema;
-mod value;
 mod storage;
+mod schema;
 
 define_schema! {
     User {

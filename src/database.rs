@@ -1,6 +1,7 @@
 use std::{collections::HashMap, fs::{File, OpenOptions}, io::{Read, Seek, SeekFrom, Write}, path::Path};
 
-use crate::{error::DatabaseError, schema::{Document, Schema}, value::Value};
+use crate::{common::DatabaseError, schema::Value};
+use crate::schema::{Schema, Document};
 
 // Collection - stores documents with a specific schema
 pub struct Collection {

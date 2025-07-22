@@ -5,8 +5,7 @@ use std::{
 };
 
 use crate::{
-    error::DatabaseError,
-    storage::page::{PAGE_SIZE, Page, PageType},
+    common::DatabaseError, storage::page::{Page, PageType, PAGE_SIZE}
 };
 
 /// Manages file I/O operations for pages

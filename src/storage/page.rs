@@ -1,4 +1,5 @@
-use crate::error::DatabaseError;
+use crate::common::DatabaseError;
+
 
 /// Page size - 4kb is a common choice for page size in many systems.
 /// It aligns well with OS page size.

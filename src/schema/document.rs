@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{error::DatabaseError, value::Value};
+use crate::{common::DatabaseError, schema::value::Value};
 
 // Schema definition for type safety
 #[derive(Debug, Clone, PartialEq)]

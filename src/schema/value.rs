@@ -1,4 +1,4 @@
-use crate::error::DatabaseError;
+use crate::common::DatabaseError;
 
 /**
  * Type IDs for the database value types.
