@@ -1,7 +1,12 @@
-use std::{collections::HashMap, fs::{File, OpenOptions}, io::{Read, Seek, SeekFrom, Write}, path::Path};
+use std::{
+    collections::HashMap,
+    fs::{File, OpenOptions},
+    io::{Read, Seek, SeekFrom, Write},
+    path::Path,
+};
 
+use crate::schema::{Document, Schema};
 use crate::{common::DatabaseError, schema::Value};
-use crate::schema::{Schema, Document};
 
 // Collection - stores documents with a specific schema
 pub struct Collection {
@@ -166,8 +171,7 @@ impl Collection {
         // Read document count and next_id
         let doc_count = u32::from_le_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]) as usize;
         let next_id = u64::from_le_bytes([
-            bytes[4], bytes[5], bytes[6], bytes[7],
-            bytes[8], bytes[9], bytes[10], bytes[11]
+            bytes[4], bytes[5], bytes[6], bytes[7], bytes[8], bytes[9], bytes[10], bytes[11],
         ]);
         offset = 12;
 
@@ -176,16 +180,23 @@ impl Collection {
         // Read documents
         for _ in 0..doc_count {
             if offset + 4 > bytes.len() {
-                return Err(DatabaseError::InvalidData("Incomplete document length".to_string()));
+                return Err(DatabaseError::InvalidData(
+                    "Incomplete document length".to_string(),
+                ));
             }
 
             let doc_length = u32::from_le_bytes([
-                bytes[offset], bytes[offset + 1], bytes[offset + 2], bytes[offset + 3]
+                bytes[offset],
+                bytes[offset + 1],
+                bytes[offset + 2],
+                bytes[offset + 3],
             ]) as usize;
             offset += 4;
 
             if offset + doc_length > bytes.len() {
-                return Err(DatabaseError::InvalidData("Incomplete document data".to_string()));
+                return Err(DatabaseError::InvalidData(
+                    "Incomplete document data".to_string(),
+                ));
             }
 
             let document = Self::deserialize_document(&bytes[offset..offset + doc_length])?;
@@ -205,19 +216,23 @@ impl Collection {
         let mut offset: usize;
 
         if bytes.len() < 12 {
-            return Err(DatabaseError::InvalidData("Document data too short".to_string()));
+            return Err(DatabaseError::InvalidData(
+                "Document data too short".to_string(),
+            ));
         }
 
         // Read document ID
         let id = u64::from_le_bytes([
-            bytes[0], bytes[1], bytes[2], bytes[3],
-            bytes[4], bytes[5], bytes[6], bytes[7]
+            bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
         ]);
         offset = 8;
 
         // Read field count
         let field_count = u32::from_le_bytes([
-            bytes[offset], bytes[offset + 1], bytes[offset + 2], bytes[offset + 3]
+            bytes[offset],
+            bytes[offset + 1],
+            bytes[offset + 2],
+            bytes[offset + 3],
         ]) as usize;
         offset += 4;
 
@@ -226,7 +241,9 @@ impl Collection {
         // Read fields
         for _ in 0..field_count {
             if offset >= bytes.len() {
-                return Err(DatabaseError::InvalidData("Incomplete field data".to_string()));
+                return Err(DatabaseError::InvalidData(
+                    "Incomplete field data".to_string(),
+                ));
             }
 
             // Read field name
@@ -234,11 +251,14 @@ impl Collection {
             offset += 1;
 
             if offset + key_len > bytes.len() {
-                return Err(DatabaseError::InvalidData("Incomplete field name".to_string()));
+                return Err(DatabaseError::InvalidData(
+                    "Incomplete field name".to_string(),
+                ));
             }
 
-            let key = String::from_utf8(bytes[offset..offset + key_len].to_vec())
-                .map_err(|e| DatabaseError::InvalidData(format!("Invalid field name UTF-8: {}", e)))?;
+            let key = String::from_utf8(bytes[offset..offset + key_len].to_vec()).map_err(|e| {
+                DatabaseError::InvalidData(format!("Invalid field name UTF-8: {}", e))
+            })?;
             offset += key_len;
 
             // Read field value
@@ -265,9 +285,10 @@ impl Database {
 
     pub fn create_collection(&mut self, name: String, schema: Schema) -> Result<(), DatabaseError> {
         if self.collections.contains_key(&name) {
-            return Err(DatabaseError::InvalidQuery(
-                format!("Collection '{}' already exists", name)
-            ));
+            return Err(DatabaseError::InvalidQuery(format!(
+                "Collection '{}' already exists",
+                name
+            )));
         }
 
         self.collections.insert(name, Collection::new(schema));
@@ -278,12 +299,13 @@ impl Database {
         &mut self,
         name: String,
         schema: Schema,
-        path: P
+        path: P,
     ) -> Result<(), DatabaseError> {
         if self.collections.contains_key(&name) {
-            return Err(DatabaseError::InvalidQuery(
-                format!("Collection '{}' already exists", name)
-            ));
+            return Err(DatabaseError::InvalidQuery(format!(
+                "Collection '{}' already exists",
+                name
+            )));
         }
 
         let collection = Collection::with_file(schema, path)?;

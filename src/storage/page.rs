@@ -1,6 +1,5 @@
 use crate::common::DatabaseError;
 
-
 /// Page size - 4kb is a common choice for page size in many systems.
 /// It aligns well with OS page size.
 pub const PAGE_SIZE: usize = 4096; // 4 KiB
@@ -360,7 +359,9 @@ impl Page {
 
         for _ in 0..header.record_count {
             if slot_offset + 4 > bytes.len() {
-                return Err(DatabaseError::InvalidData("Invalid slot directory".to_string()));
+                return Err(DatabaseError::InvalidData(
+                    "Invalid slot directory".to_string(),
+                ));
             }
 
             let slot = SlotEntry::deserialize(&bytes[slot_offset..slot_offset + 4])?;

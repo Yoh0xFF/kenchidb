@@ -206,7 +206,9 @@ fn serialize_string(value: &str) -> Vec<u8> {
 #[inline]
 fn deserialize_byte(bytes: &[u8]) -> Result<(Value, usize), DatabaseError> {
     if bytes.len() < TYPE_BYTE_SIZE {
-        return Err(DatabaseError::InvalidData("Incomplete byte value".to_string()));
+        return Err(DatabaseError::InvalidData(
+            "Incomplete byte value".to_string(),
+        ));
     }
     Ok((Value::Byte(bytes[1]), TYPE_BYTE_SIZE))
 }
@@ -214,7 +216,9 @@ fn deserialize_byte(bytes: &[u8]) -> Result<(Value, usize), DatabaseError> {
 #[inline]
 fn deserialize_short(bytes: &[u8]) -> Result<(Value, usize), DatabaseError> {
     if bytes.len() < TYPE_SHORT_SIZE {
-        return Err(DatabaseError::InvalidData("Incomplete short value".to_string()));
+        return Err(DatabaseError::InvalidData(
+            "Incomplete short value".to_string(),
+        ));
     }
     let value = i16::from_le_bytes([bytes[1], bytes[2]]);
     Ok((Value::Short(value), TYPE_SHORT_SIZE))
@@ -223,7 +227,9 @@ fn deserialize_short(bytes: &[u8]) -> Result<(Value, usize), DatabaseError> {
 #[inline]
 fn deserialize_int(bytes: &[u8]) -> Result<(Value, usize), DatabaseError> {
     if bytes.len() < TYPE_INT_SIZE {
-        return Err(DatabaseError::InvalidData("Incomplete int value".to_string()));
+        return Err(DatabaseError::InvalidData(
+            "Incomplete int value".to_string(),
+        ));
     }
     let value = i32::from_le_bytes([bytes[1], bytes[2], bytes[3], bytes[4]]);
     Ok((Value::Int(value), TYPE_INT_SIZE))
@@ -232,7 +238,9 @@ fn deserialize_int(bytes: &[u8]) -> Result<(Value, usize), DatabaseError> {
 #[inline]
 fn deserialize_long(bytes: &[u8]) -> Result<(Value, usize), DatabaseError> {
     if bytes.len() < TYPE_LONG_SIZE {
-        return Err(DatabaseError::InvalidData("Incomplete long value".to_string()));
+        return Err(DatabaseError::InvalidData(
+            "Incomplete long value".to_string(),
+        ));
     }
     let mut array = [0u8; 8];
     array.copy_from_slice(&bytes[1..9]);
@@ -243,7 +251,9 @@ fn deserialize_long(bytes: &[u8]) -> Result<(Value, usize), DatabaseError> {
 #[inline]
 fn deserialize_float(bytes: &[u8]) -> Result<(Value, usize), DatabaseError> {
     if bytes.len() < TYPE_FLOAT_SIZE {
-        return Err(DatabaseError::InvalidData("Incomplete float value".to_string()));
+        return Err(DatabaseError::InvalidData(
+            "Incomplete float value".to_string(),
+        ));
     }
     let value = f32::from_le_bytes([bytes[1], bytes[2], bytes[3], bytes[4]]);
     Ok((Value::Float(value), TYPE_FLOAT_SIZE))
@@ -252,7 +262,9 @@ fn deserialize_float(bytes: &[u8]) -> Result<(Value, usize), DatabaseError> {
 #[inline]
 fn deserialize_double(bytes: &[u8]) -> Result<(Value, usize), DatabaseError> {
     if bytes.len() < TYPE_DOUBLE_SIZE {
-        return Err(DatabaseError::InvalidData("Incomplete double value".to_string()));
+        return Err(DatabaseError::InvalidData(
+            "Incomplete double value".to_string(),
+        ));
     }
     let mut array = [0u8; 8];
     array.copy_from_slice(&bytes[1..9]);
@@ -263,7 +275,9 @@ fn deserialize_double(bytes: &[u8]) -> Result<(Value, usize), DatabaseError> {
 #[inline]
 fn deserialize_boolean(bytes: &[u8]) -> Result<(Value, usize), DatabaseError> {
     if bytes.len() < TYPE_BOOLEAN_SIZE {
-        return Err(DatabaseError::InvalidData("Incomplete boolean value".to_string()));
+        return Err(DatabaseError::InvalidData(
+            "Incomplete boolean value".to_string(),
+        ));
     }
     Ok((Value::Boolean(bytes[1] != 0), TYPE_BOOLEAN_SIZE))
 }
@@ -271,11 +285,15 @@ fn deserialize_boolean(bytes: &[u8]) -> Result<(Value, usize), DatabaseError> {
 #[inline]
 fn deserialize_string(bytes: &[u8]) -> Result<(Value, usize), DatabaseError> {
     if bytes.len() < TYPE_STRING_SIZE {
-        return Err(DatabaseError::InvalidData("Incomplete string length".to_string()));
+        return Err(DatabaseError::InvalidData(
+            "Incomplete string length".to_string(),
+        ));
     }
     let len = bytes[1] as usize;
     if bytes.len() < 2 + len {
-        return Err(DatabaseError::InvalidData("Incomplete string data".to_string()));
+        return Err(DatabaseError::InvalidData(
+            "Incomplete string data".to_string(),
+        ));
     }
     let string_bytes = &bytes[2..2 + len];
     let value = String::from_utf8(string_bytes.to_vec())

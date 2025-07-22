@@ -1,4 +1,7 @@
-use crate::{database::Collection, schema::{Document, Value}};
+use crate::{
+    database::Collection,
+    schema::{Document, Value},
+};
 
 // Macro to define schemas with TypeScript-like syntax
 #[macro_export]

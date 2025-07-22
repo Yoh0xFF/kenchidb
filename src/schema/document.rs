@@ -55,17 +55,20 @@ impl Schema {
             match document.data.get(&field.name) {
                 Some(value) => {
                     if !field.field_type.validates(value) {
-                        return Err(DatabaseError::SchemaViolation(
-                            format!("Field '{}' has wrong type. Expected {:?}, got {}",
-                                field.name, field.field_type, value.type_name())
-                        ));
+                        return Err(DatabaseError::SchemaViolation(format!(
+                            "Field '{}' has wrong type. Expected {:?}, got {}",
+                            field.name,
+                            field.field_type,
+                            value.type_name()
+                        )));
                     }
                 }
                 None => {
                     if !field.nullable {
-                        return Err(DatabaseError::SchemaViolation(
-                            format!("Required field '{}' is missing", field.name)
-                        ));
+                        return Err(DatabaseError::SchemaViolation(format!(
+                            "Required field '{}' is missing",
+                            field.name
+                        )));
                     }
                 }
             }
@@ -74,9 +77,10 @@ impl Schema {
         // Check that no extra fields are present
         for key in document.data.keys() {
             if !self.fields.iter().any(|f| f.name == *key) {
-                return Err(DatabaseError::SchemaViolation(
-                    format!("Unknown field '{}' not in schema", key)
-                ));
+                return Err(DatabaseError::SchemaViolation(format!(
+                    "Unknown field '{}' not in schema",
+                    key
+                )));
             }
         }
 
