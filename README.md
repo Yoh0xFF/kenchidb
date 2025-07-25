@@ -10,5 +10,5 @@ Strongly typed embedded document database.
 
 Must implement:
 - Paged storage engine;
-- B-Tree indexes;
-- WAL mode for transaction management;
+- Copy-on-write B-tree indexes with atomic transactions;
+- Single writer multiple readers
