@@ -11,4 +11,5 @@ Strongly typed embedded document database.
 Must implement:
 - Paged storage engine;
 - Copy-on-write B-tree indexes with atomic transactions;
-- Single writer multiple readers
+- Simplified BSON format to communicate with client libraries;
+- Single writer multiple readers;
