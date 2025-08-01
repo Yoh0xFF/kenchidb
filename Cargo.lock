@@ -3,5 +3,9 @@
 version = 4
 
 [[package]]
-name = "KenchiDB"
+name = "btree"
+version = "0.1.0"
+
+[[package]]
+name = "kenchidb"
 version = "0.1.0"

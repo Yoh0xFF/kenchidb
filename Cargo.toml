@@ -1,5 +1,10 @@
-[package]
-name = "KenchiDB"
+[workspace]
+# Use the newer version of the cargo resolver
+# https://doc.rust-lang.org/cargo/reference/resolver.html#resolver-versions
+members = ["crates/*"]
+resolver = "3"
+
+[workspace.package]
 version = "0.1.0"
 edition = "2024"
 authors = ["Ioram Gordadze <Yoh0xFF@gmail.com>"]
@@ -12,7 +17,12 @@ readme = "README.md"
 keywords = ["database", "embedded", "document", "nosql", "storage"]
 categories = ["database-implementations", "embedded"]
 
-[dependencies]
+[workspace.dependencies]
+anyhow = "1.0.98"
+thiserror = "2.0.12"
+serde = "1.0.219"
+serde_yaml = "0.9.33"
 
-[lints.rust]
+[workspace.lints.rust]
 dead_code = "allow"
+
