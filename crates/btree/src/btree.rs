@@ -96,8 +96,17 @@ impl Btree {
         self.recursive_search(self.root_id, key)
     }
 
-    pub fn insert() {
-        todo!()
+    /// O(h) disk access
+    /// O(md * h) = O(md * log.md(n)) CPU time
+    pub fn insert(&mut self, key: u64) {
+        let nodes = self.arena.nodes.as_mut_slice();
+
+        if nodes[self.root_id].n == 2 * self.md - 1 {
+            let new_root_id = self.split_root();
+            self.recursive_insert(new_root_id, key);
+        } else {
+            self.recursive_insert(self.root_id, key);
+        }
     }
 
     pub fn delete() {
@@ -122,6 +131,65 @@ impl Btree {
         }
 
         self.recursive_search(node.children_ids[index], key)
+    }
+
+    fn recursive_insert(&mut self, node_id: NodeId, key: u64) {
+        let n = self.arena.nodes[node_id].n;
+
+        if self.arena.nodes[node_id].leaf {
+            // inserting into a leaf
+            let keys = self.arena.nodes[node_id].keys.as_mut_slice();
+            let mut pos = 0;
+
+            // find insertion position
+            while pos < n && keys[pos] < key {
+                pos += 1;
+            }
+
+            // shift keys and insert
+            for i in (pos..n).rev() {
+                keys[i + 1] = keys[i];
+            }
+            keys[pos] = key;
+            self.arena.nodes[node_id].n += 1;
+        } else {
+            // find the child where key belongs
+            let mut pos = 0;
+
+            // find insertion position
+            while pos < n && key > self.arena.nodes[node_id].keys[pos]  {
+                pos += 1;
+            }
+
+            let child_id = self.arena.nodes[node_id].children_ids[pos];
+            if self.arena.nodes[child_id].n == 2 * self.md - 1 {
+                // split the child if it is full
+                self.split_child(node_id, pos);
+                if key > self.arena.nodes[node_id].keys[pos] {
+                    // does key go into child[i] or child[i + 1]?
+                    pos += 1;
+                }
+            }
+
+            let child_id = self.arena.nodes[node_id].children_ids[pos];
+            self.recursive_insert(child_id, key);
+        }
+    }
+
+    fn split_root(&mut self) -> NodeId {
+        // allocate the new root
+        let new_root_id = self.arena.allocate_node(self.md);
+        
+        // set new root properties 
+        self.arena.nodes[new_root_id].leaf = false;
+        self.arena.nodes[new_root_id].n = 0;
+        self.arena.nodes[new_root_id].children_ids[0] = self.root_id;
+        
+        // overwrite the old root and split it
+        self.root_id = new_root_id;
+        self.split_child(new_root_id, 0);
+
+        new_root_id
     }
 
     /// split creates a sibling node from a given node by splitting the node in two around a median.
