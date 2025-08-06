@@ -99,9 +99,7 @@ impl Btree {
     /// O(h) disk access
     /// O(md * h) = O(md * log.md(n)) CPU time
     pub fn insert(&mut self, key: u64) {
-        let nodes = self.arena.nodes.as_mut_slice();
-
-        if nodes[self.root_id].n == 2 * self.md - 1 {
+        if self.arena.nodes[self.root_id].n == 2 * self.md - 1 {
             let new_root_id = self.split_root();
             self.recursive_insert(new_root_id, key);
         } else {
@@ -138,26 +136,25 @@ impl Btree {
 
         if self.arena.nodes[node_id].leaf {
             // inserting into a leaf
-            let keys = self.arena.nodes[node_id].keys.as_mut_slice();
             let mut pos = 0;
 
             // find insertion position
-            while pos < n && keys[pos] < key {
+            while pos < n && self.arena.nodes[node_id].keys[pos] < key {
                 pos += 1;
             }
 
             // shift keys and insert
             for i in (pos..n).rev() {
-                keys[i + 1] = keys[i];
+                self.arena.nodes[node_id].keys[i + 1] = self.arena.nodes[node_id].keys[i];
             }
-            keys[pos] = key;
+            self.arena.nodes[node_id].keys[pos] = key;
             self.arena.nodes[node_id].n += 1;
         } else {
             // find the child where key belongs
             let mut pos = 0;
 
             // find insertion position
-            while pos < n && key > self.arena.nodes[node_id].keys[pos]  {
+            while pos < n && key > self.arena.nodes[node_id].keys[pos] {
                 pos += 1;
             }
 
@@ -179,12 +176,12 @@ impl Btree {
     fn split_root(&mut self) -> NodeId {
         // allocate the new root
         let new_root_id = self.arena.allocate_node(self.md);
-        
-        // set new root properties 
+
+        // set new root properties
         self.arena.nodes[new_root_id].leaf = false;
         self.arena.nodes[new_root_id].n = 0;
         self.arena.nodes[new_root_id].children_ids[0] = self.root_id;
-        
+
         // overwrite the old root and split it
         self.root_id = new_root_id;
         self.split_child(new_root_id, 0);
@@ -197,53 +194,54 @@ impl Btree {
     /// while moving the set of [md, 2md-1] keys to the sibling.
     fn split_child(&mut self, parent_id: NodeId, child_index: usize) {
         let new_sibling_id = self.arena.allocate_node(self.md);
-        let nodes = self.arena.nodes.as_mut_slice();
 
         // **************************
         // * Work on the child node *
         // **************************
 
         // Get the child properties
-        let child_id = nodes[parent_id].children_ids[child_index];
-        let is_leaf = nodes[child_id].leaf;
-        let median_key = nodes[child_id].keys[self.md - 1];
+        let child_id = self.arena.nodes[parent_id].children_ids[child_index];
+        let is_leaf = self.arena.nodes[child_id].leaf;
+        let median_key = self.arena.nodes[child_id].keys[self.md - 1];
 
         // Set up the new sibling node
-        nodes[new_sibling_id].leaf = is_leaf;
-        nodes[new_sibling_id].n = self.md - 1;
+        self.arena.nodes[new_sibling_id].leaf = is_leaf;
+        self.arena.nodes[new_sibling_id].n = self.md - 1;
 
         // Copy the upper half of keys from the child to the new sibling
         for i in 0..(self.md - 1) {
-            nodes[new_sibling_id].keys[i] = nodes[child_id].keys[i + self.md];
+            self.arena.nodes[new_sibling_id].keys[i] = self.arena.nodes[child_id].keys[i + self.md];
         }
 
         // If not leaf, copy the upper half of the children pointers
         if !is_leaf {
             for i in 0..self.md {
-                nodes[new_sibling_id].children_ids[i] = nodes[child_id].children_ids[i + self.md];
+                self.arena.nodes[new_sibling_id].children_ids[i] =
+                    self.arena.nodes[child_id].children_ids[i + self.md];
             }
         }
 
         // Update the original child's key count
-        nodes[child_id].n = self.md - 1;
+        self.arena.nodes[child_id].n = self.md - 1;
 
         // ***************************
         // * Work on the parent node *
         // ***************************
 
         // Shift existing children pointers to make room for the new sibling
-        for i in (child_index + 1..=nodes[parent_id].n).rev() {
-            nodes[parent_id].children_ids[i + 1] = nodes[parent_id].children_ids[i];
+        for i in (child_index + 1..=self.arena.nodes[parent_id].n).rev() {
+            self.arena.nodes[parent_id].children_ids[i + 1] =
+                self.arena.nodes[parent_id].children_ids[i];
         }
-        nodes[parent_id].children_ids[child_index + 1] = new_sibling_id;
+        self.arena.nodes[parent_id].children_ids[child_index + 1] = new_sibling_id;
 
         // Shift existing keys in the parent node to make room for the median key
-        for i in (child_index..nodes[parent_id].n).rev() {
-            nodes[parent_id].keys[i + 1] = nodes[parent_id].keys[i];
+        for i in (child_index..self.arena.nodes[parent_id].n).rev() {
+            self.arena.nodes[parent_id].keys[i + 1] = self.arena.nodes[parent_id].keys[i];
         }
-        nodes[parent_id].keys[child_index] = median_key;
+        self.arena.nodes[parent_id].keys[child_index] = median_key;
 
         // Increment parent node's key count
-        nodes[parent_id].n += 1;
+        self.arena.nodes[parent_id].n += 1;
     }
 }
