@@ -80,6 +80,7 @@ impl Arena {
     }
 }
 
+/// Btree search implementation
 impl Btree {
     pub fn new(minimum_degree: usize) -> Self {
         let mut arena = Arena::new();
@@ -94,23 +95,6 @@ impl Btree {
 
     pub fn search(&self, key: u64) -> Option<(NodeId, usize)> {
         self.recursive_search(self.root_id, key)
-    }
-
-    /// O(h) disk access
-    /// O(md * h) = O(md * log.md(n)) CPU time
-    pub fn insert(&mut self, key: u64) {
-        let t = self.t;
-
-        if self.arena.nodes[self.root_id].n == 2 * t - 1 {
-            let new_root_id = self.split_root();
-            self.recursive_insert(new_root_id, key);
-        } else {
-            self.recursive_insert(self.root_id, key);
-        }
-    }
-
-    pub fn delete(&mut self, key: u64) {
-        self.recursive_delete(self.root_id, key);
     }
 
     // Private methods
@@ -132,48 +116,74 @@ impl Btree {
 
         self.recursive_search(node.children_ids[index], key)
     }
+}
+
+/// BTree insert implementation
+impl Btree {
+    /// O(h) disk access
+    /// O(md * h) = O(md * log.md(n)) CPU time
+    pub fn insert(&mut self, key: u64) {
+        let t = self.t;
+
+        if self.arena.nodes[self.root_id].n == 2 * t - 1 {
+            let new_root_id = self.split_root();
+            self.recursive_insert(new_root_id, key);
+        } else {
+            self.recursive_insert(self.root_id, key);
+        }
+    }
 
     fn recursive_insert(&mut self, node_id: NodeId, key: u64) {
+        if self.arena.nodes[node_id].leaf {
+            self.insert_into_leaf_node(node_id, key);
+        } else {
+            self.insert_into_internal_node(node_id, key);
+        }
+    }
+
+    fn insert_into_leaf_node(&mut self, node_id: NodeId, key: u64) {
+        let n = self.arena.nodes[node_id].n;
+
+        // inserting into a leaf
+        let mut pos = 0;
+
+        // find insertion position
+        while pos < n && self.arena.nodes[node_id].keys[pos] < key {
+            pos += 1;
+        }
+
+        // shift keys and insert
+        for i in (pos..n).rev() {
+            self.arena.nodes[node_id].keys[i + 1] = self.arena.nodes[node_id].keys[i];
+        }
+        self.arena.nodes[node_id].keys[pos] = key;
+        self.arena.nodes[node_id].n += 1;
+    }
+
+    fn insert_into_internal_node(&mut self, node_id: NodeId, key: u64) {
         let t = self.t;
         let n = self.arena.nodes[node_id].n;
 
-        if self.arena.nodes[node_id].leaf {
-            // inserting into a leaf
-            let mut pos = 0;
+        // find the child where the key belongs
+        let mut pos = 0;
 
-            // find insertion position
-            while pos < n && self.arena.nodes[node_id].keys[pos] < key {
-                pos += 1;
-            }
-
-            // shift keys and insert
-            for i in (pos..n).rev() {
-                self.arena.nodes[node_id].keys[i + 1] = self.arena.nodes[node_id].keys[i];
-            }
-            self.arena.nodes[node_id].keys[pos] = key;
-            self.arena.nodes[node_id].n += 1;
-        } else {
-            // find the child where key belongs
-            let mut pos = 0;
-
-            // find insertion position
-            while pos < n && key > self.arena.nodes[node_id].keys[pos] {
-                pos += 1;
-            }
-
-            let child_id = self.arena.nodes[node_id].children_ids[pos];
-            if self.arena.nodes[child_id].n == 2 * t - 1 {
-                // split the child if it is full
-                self.split_child(node_id, pos);
-                if key > self.arena.nodes[node_id].keys[pos] {
-                    // does key go into child[i] or child[i + 1]?
-                    pos += 1;
-                }
-            }
-
-            let child_id = self.arena.nodes[node_id].children_ids[pos];
-            self.recursive_insert(child_id, key);
+        // find insertion position
+        while pos < n && key > self.arena.nodes[node_id].keys[pos] {
+            pos += 1;
         }
+
+        let child_id = self.arena.nodes[node_id].children_ids[pos];
+        if self.arena.nodes[child_id].n == 2 * t - 1 {
+            // split the child if it is full
+            self.split_child(node_id, pos);
+            if key > self.arena.nodes[node_id].keys[pos] {
+                // does the key go into child[i] or child[i + 1]?
+                pos += 1;
+            }
+        }
+
+        let child_id = self.arena.nodes[node_id].children_ids[pos];
+        self.recursive_insert(child_id, key);
     }
 
     fn split_root(&mut self) -> NodeId {
@@ -249,6 +259,13 @@ impl Btree {
 
         // Increment parent node's key count
         self.arena.nodes[parent_id].n += 1;
+    }
+}
+
+/// Btree delete implementation
+impl Btree {
+    pub fn delete(&mut self, key: u64) {
+        self.recursive_delete(self.root_id, key);
     }
 
     fn recursive_delete(&mut self, node_id: NodeId, key: u64) {
@@ -337,7 +354,8 @@ impl Btree {
         let right_child_n = self.arena.nodes[right_child_id].n;
 
         // Move parent key down to the left child
-        self.arena.nodes[left_child_id].keys[left_child_n] = self.arena.nodes[parent_id].keys[index];
+        self.arena.nodes[left_child_id].keys[left_child_n] =
+            self.arena.nodes[parent_id].keys[index];
 
         // Move all keys from right child to left
         let right_child_keys = self.arena.nodes[right_child_id].keys.clone();
