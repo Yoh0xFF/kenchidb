@@ -26,12 +26,25 @@ impl Btree {
         // We are in the internal node
         match position {
             Some(index) => {
-                // Case 1: key is in internal node
+                // Case 1: key is in the internal node
                 self.delete_from_internal_node(node_id, index);
             }
             None => {
                 // Case 2: key is not in this node, recurse to child
-                todo!()
+                let mut child_index = self.find_child_index(node_id, key);
+                let mut child_id = self.arena.nodes[node_id].children_ids[child_index];
+                let child = &self.arena.nodes[child_id];
+
+                if child.n < self.t {
+                    // Child has a minimum number of keys, need to fix before deletion
+                    self.fix_child(node_id, child_index);
+
+                    // After fixing, the key might have moved, so re-find the child
+                    child_index = self.find_child_index(node_id, key);
+                    child_id = self.arena.nodes[node_id].children_ids[child_index];
+                }
+
+                self.recursive_delete(child_id, key);
             }
         }
     }
@@ -85,6 +98,33 @@ impl Btree {
         self.arena.nodes[node_id].keys[0]
     }
 
+    fn fix_child(&mut self, parent_id: NodeId, child_index: usize) {
+        let parent = &self.arena.nodes[parent_id];
+
+        if child_index > 0 && self.arena.nodes[parent.children_ids[child_index - 1]].n >= self.t {
+            // Case 2a: Left sibling has extra keys, borrow from it
+            self.borrow_from_left_sibling(parent_id, child_index);
+        } else if child_index < parent.n && self.arena.nodes[parent.children_ids[child_index + 1]].n >= self.t {
+            // Case 2b: Right sibling has extra keys, borrow from it
+            self.borrow_from_right_sibling(parent_id, child_index);
+        } else {
+            // Case 2c: Both siblings have minimum keys, merge with a sibling
+            if child_index > 0 {
+                self.merge_children(parent_id, child_index - 1);
+            } else {
+                self.merge_children(parent_id, child_index);
+            }
+        }
+    }
+
+    fn borrow_from_left_sibling(&mut self, parent_id: NodeId, child_index: usize) {
+        todo!();
+    }
+    
+    fn borrow_from_right_sibling(&mut self, parent_id: NodeId, child_index: usize) {
+        todo!();
+    }
+
     fn merge_children(&mut self, parent_id: NodeId, index: usize) {
         let left_child_id = self.arena.nodes[parent_id].children_ids[index];
         let right_child_id = self.arena.nodes[parent_id].children_ids[index + 1];
@@ -92,7 +132,7 @@ impl Btree {
         let left_child_n = self.arena.nodes[left_child_id].n;
         let right_child_n = self.arena.nodes[right_child_id].n;
 
-        // Move parent key down to the left child
+        // Move the parent key down to the left child
         self.arena.nodes[left_child_id].keys[left_child_n] =
             self.arena.nodes[parent_id].keys[index];
 

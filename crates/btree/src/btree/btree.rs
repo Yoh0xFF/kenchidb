@@ -27,3 +27,23 @@ pub struct Btree {
     pub(super) arena: Arena,    // Arena for tree nodes
     pub(super) root_id: NodeId, // Root of the tree
 }
+
+impl Btree {
+    pub fn find_key_index(&self, node_id: NodeId, key: u64) -> Option<usize> {
+        self.arena.nodes[node_id]
+            .keys
+            .iter()
+            .position(|&x| x == key)
+    }
+
+    pub fn find_child_index(&self, node_id: NodeId, key: u64) -> usize {
+        let node = &self.arena.nodes[node_id];
+        let mut child_index = 0;
+
+        while child_index < node.n && node.keys[child_index] < key {
+            child_index += 1;
+        }
+
+        child_index
+    }
+}
