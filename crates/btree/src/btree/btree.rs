@@ -29,14 +29,25 @@ pub struct Btree {
 }
 
 impl Btree {
-    pub fn find_key_index(&self, node_id: NodeId, key: u64) -> Option<usize> {
+    pub fn new(minimum_degree: usize) -> Self {
+        let mut arena = Arena::new();
+        let id = arena.allocate_node(minimum_degree);
+
+        Self {
+            t: minimum_degree,
+            arena,
+            root_id: id,
+        }
+    }
+
+    pub(super) fn find_key_index(&self, node_id: NodeId, key: u64) -> Option<usize> {
         self.arena.nodes[node_id]
             .keys
             .iter()
             .position(|&x| x == key)
     }
 
-    pub fn find_child_index(&self, node_id: NodeId, key: u64) -> usize {
+    pub(super) fn find_child_index(&self, node_id: NodeId, key: u64) -> usize {
         let node = &self.arena.nodes[node_id];
         let mut child_index = 0;
 

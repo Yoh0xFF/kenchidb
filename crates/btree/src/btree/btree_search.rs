@@ -1,19 +1,8 @@
-use crate::btree::arena::{Arena, NodeId};
+use crate::btree::arena::{NodeId};
 use crate::btree::btree::Btree;
 
 /// Btree search implementation
 impl Btree {
-    pub fn new(minimum_degree: usize) -> Self {
-        let mut arena = Arena::new();
-        let id = arena.allocate_node(minimum_degree);
-
-        Self {
-            t: minimum_degree,
-            arena,
-            root_id: id,
-        }
-    }
-
     pub fn search(&self, key: u64) -> Option<(NodeId, usize)> {
         self.recursive_search(self.root_id, key)
     }
