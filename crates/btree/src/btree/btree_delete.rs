@@ -168,39 +168,42 @@ impl Btree {
     }
 
     fn merge_children(&mut self, parent_id: NodeId, index: usize) {
-        let left_child_id = self.arena.nodes[parent_id].children_ids[index];
-        let right_child_id = self.arena.nodes[parent_id].children_ids[index + 1];
+        let nodes = &mut self.arena.nodes;
 
-        let left_child_n = self.arena.nodes[left_child_id].n;
-        let right_child_n = self.arena.nodes[right_child_id].n;
+        let p_id = parent_id; // parent
+        let lc_id = nodes[p_id].children_ids[index]; // left child
+        let rc_id = nodes[p_id].children_ids[index + 1]; // right child
+
+        let p_n = nodes[p_id].n;
+        let lc_n = nodes[lc_id].n;
+        let rc_n = nodes[rc_id].n;
 
         // Move the parent key down to the left child
-        self.arena.nodes[left_child_id].keys[left_child_n] =
-            self.arena.nodes[parent_id].keys[index];
+        nodes[lc_id].keys[lc_n] = nodes[p_id].keys[index];
 
         // Move all keys from right child to left
-        let right_child_keys = self.arena.nodes[right_child_id].keys.clone();
-        self.arena.nodes[left_child_id]
-            .keys
-            .extend(right_child_keys);
-
-        // Move all children from right child to left
-        if !self.arena.nodes[left_child_id].is_leaf {
-            let right_child_children = self.arena.nodes[right_child_id].children_ids.clone();
-            self.arena.nodes[left_child_id]
-                .children_ids
-                .extend(right_child_children);
+        for i in 0..rc_n {
+            nodes[lc_id].keys[lc_n + 1 + i] = nodes[rc_id].keys[i];
         }
 
-        // Remove the key and child pointer from parent
-        self.arena.nodes[parent_id].keys.remove(index);
-        self.arena.nodes[parent_id].children_ids.remove(index + 1);
+        // Move all children from right child to left
+        if !nodes[lc_id].is_leaf {
+            for i in 0..=rc_n {
+                nodes[lc_id].children_ids[lc_n + 1 + i] = nodes[rc_id].children_ids[i];
+            }
+        }
+
+        // Remove the key and child pointer from the parent
+        for i in index..(p_n - 1) {
+            nodes[p_id].keys[i] = nodes[p_id].keys[i + 1];
+            nodes[p_id].children_ids[i + 1] = nodes[p_id].children_ids[i + 2];
+        }
 
         // Update nodes' key numbers
-        self.arena.nodes[left_child_id].n = left_child_n + right_child_n + 1;
-        self.arena.nodes[parent_id].n -= 1;
+        nodes[lc_id].n = lc_n + rc_n + 1;
+        nodes[p_id].n -= 1;
 
         // Deallocate right child
-        self.arena.deallocate_node(right_child_id, self.t);
+        self.arena.deallocate_node(rc_id, self.t);
     }
 }
