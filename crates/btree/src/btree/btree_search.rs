@@ -8,22 +8,22 @@ impl Btree {
     }
 
     // Private methods
-    fn recursive_search(&self, node_id: NodeId, key: u64) -> Option<(NodeId, usize)> {
-        let mut index: usize = 0;
-        let node = &self.arena.nodes[node_id];
+    fn recursive_search(&self, id: NodeId, key: u64) -> Option<(NodeId, usize)> {
+        let node = &self.arena.nodes[id];
+        let mut k: usize = 0;
 
-        while index < node.n && node.keys[index] < key {
-            index += 1;
+        while k < node.n && node.keys[k] < key {
+            k += 1;
         }
 
-        if index < node.n && node.keys[index] == key {
-            return Some((node_id, index));
+        if k < node.n && node.keys[k] == key {
+            return Some((id, k));
         }
 
         if node.is_leaf {
             return None;
         }
 
-        self.recursive_search(node.children_ids[index], key)
+        self.recursive_search(node.children_ids[k], key)
     }
 }
