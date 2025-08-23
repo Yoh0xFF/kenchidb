@@ -6,7 +6,7 @@ use crate::btree::arena::{Arena, NodeId};
 /// - All leaves have the same depths, which is the tree's height.
 ///
 /// - Nodes have minimum and maximum bounds on the number of keys they can contain.
-///     We call it a minimum degree of the tree, and assign it to t variable.
+///     We call it a minimum degree of the tree and assign it to t variable.
 ///
 /// - Every node other than the root must have at least (t - 1) keys.
 ///     This means that every internal node has at least (t) children.
@@ -17,7 +17,7 @@ use crate::btree::arena::{Arena, NodeId};
 ///
 /// - The higher is (t) of the three, the smaller is its height.
 ///
-/// - The number of disk accesses required for most operations on a BTree,
+/// - The number of disk accesses required for most operations on a BTree 
 ///     is proportional to the height of the tree.
 ///
 
