@@ -14,7 +14,7 @@ impl Btree {
             .position(|&x| x == key);
 
         // We are in the leaf node
-        if self.arena.nodes[node_id].leaf {
+        if self.arena.nodes[node_id].is_leaf {
             match position {
                 Some(index) => {
                     self.arena.nodes[node_id].keys.remove(index);
@@ -78,7 +78,7 @@ impl Btree {
         // Find the maximum key in the subtree rooted at parent
         let mut node_id = parent_id;
 
-        while !self.arena.nodes[node_id].leaf {
+        while !self.arena.nodes[node_id].is_leaf {
             // Rightmost child
             node_id = self.arena.nodes[node_id].children_ids[self.arena.nodes[node_id].n];
         }
@@ -91,7 +91,7 @@ impl Btree {
         // Find the minimum key in the subtree rooted at parent
         let mut node_id = parent_id;
 
-        while !self.arena.nodes[node_id].leaf {
+        while !self.arena.nodes[node_id].is_leaf {
             // Leftmost child
             node_id = self.arena.nodes[node_id].children_ids[0];
         }
@@ -132,7 +132,7 @@ impl Btree {
         self.arena.nodes[parent_id].keys[child_index - 1] = left_sibling_key.unwrap();
 
         // Move left sibling's last child to the current child (if not leaf)
-        if !self.arena.nodes[child_id].leaf {
+        if !self.arena.nodes[child_id].is_leaf {
             let left_sibling_child_id = self.arena.nodes[left_sibling_id].children_ids.pop();
             self.arena.nodes[child_id].children_ids.insert(0, left_sibling_child_id.unwrap());
         }
@@ -154,7 +154,7 @@ impl Btree {
         self.arena.nodes[parent_id].keys[child_index] = right_sibling_key;
 
         // Move right sibling's first child to the current child (if not leaf)
-        if !self.arena.nodes[child_id].leaf {
+        if !self.arena.nodes[child_id].is_leaf {
             let right_sibling_child_id = self.arena.nodes[right_sibling_id].children_ids.remove(0);
             self.arena.nodes[child_id].children_ids.push(right_sibling_child_id);
         }
@@ -181,7 +181,7 @@ impl Btree {
             .extend(right_child_keys);
 
         // Move all children from right child to left
-        if !self.arena.nodes[left_child_id].leaf {
+        if !self.arena.nodes[left_child_id].is_leaf {
             let right_child_children = self.arena.nodes[right_child_id].children_ids.clone();
             self.arena.nodes[left_child_id]
                 .children_ids

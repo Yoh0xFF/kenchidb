@@ -4,7 +4,7 @@ pub type NodeId = usize;
 pub(super) struct BtreeNode {
     pub(super) id: NodeId,                // Node unique id
     pub(super) n: usize,                  // Number of keys currently stored in the node
-    pub(super) leaf: bool,                // Indicator of the internal and leaf nodes
+    pub(super) is_leaf: bool,                // Indicator of the internal and leaf nodes
     pub(super) keys: Vec<u64>,            // Node keys in monotonically increasing order key[i] <= key[i + 1]
     pub(super) children_ids: Vec<NodeId>, // Node (number_of_keys + 1) pointers to the children
 }
@@ -32,7 +32,7 @@ impl Arena {
         self.nodes.push(BtreeNode {
             id,
             n: 0,
-            leaf: true,
+            is_leaf: true,
             keys: vec![],
             children_ids: vec![],
         });
@@ -44,7 +44,7 @@ impl Arena {
     pub fn deallocate_node(&mut self, id: NodeId, t: usize) {
         self.free_list.push(id);
         self.nodes[id].n = 0;
-        self.nodes[id].leaf = true;
+        self.nodes[id].is_leaf = true;
         self.nodes[id].keys.clear();
         self.nodes[id].keys.resize(2 * t - 1, 0);
         self.nodes[id].children_ids.clear();

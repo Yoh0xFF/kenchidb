@@ -17,7 +17,7 @@ impl Btree {
     }
 
     fn recursive_insert(&mut self, node_id: NodeId, key: u64) {
-        if self.arena.nodes[node_id].leaf {
+        if self.arena.nodes[node_id].is_leaf {
             self.insert_into_leaf_node(node_id, key);
         } else {
             self.insert_into_internal_node(node_id, key);
@@ -76,7 +76,7 @@ impl Btree {
         let new_root_id = self.arena.allocate_node(t);
 
         // set new root properties
-        self.arena.nodes[new_root_id].leaf = false;
+        self.arena.nodes[new_root_id].is_leaf = false;
         self.arena.nodes[new_root_id].n = 0;
         self.arena.nodes[new_root_id].children_ids[0] = self.root_id;
 
@@ -100,11 +100,11 @@ impl Btree {
 
         // Get the child properties
         let child_id = self.arena.nodes[parent_id].children_ids[child_index];
-        let is_leaf = self.arena.nodes[child_id].leaf;
+        let is_leaf = self.arena.nodes[child_id].is_leaf;
         let median_key = self.arena.nodes[child_id].keys[t - 1];
 
         // Set up the new sibling node
-        self.arena.nodes[new_sibling_id].leaf = is_leaf;
+        self.arena.nodes[new_sibling_id].is_leaf = is_leaf;
         self.arena.nodes[new_sibling_id].n = t - 1;
 
         // Copy the upper half of keys from the child to the new sibling

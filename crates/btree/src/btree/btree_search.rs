@@ -20,7 +20,7 @@ impl Btree {
             return Some((node_id, index));
         }
 
-        if node.leaf {
+        if node.is_leaf {
             return None;
         }
 
