@@ -5,76 +5,82 @@ use crate::btree::btree::Btree;
 impl Btree {
     pub fn delete(&mut self, key: u64) {
         self.recursive_delete(self.root_id, key);
+
+        let nodes = &mut self.arena.nodes;
+
+        // Handle root shrinking
+        if nodes[self.root_id].n == 0 && !nodes[self.root_id].is_leaf {
+            let old_root = self.root_id;
+            self.root_id = nodes[self.root_id].children_ids[0];
+            self.arena.deallocate_node(old_root, self.t);
+        }
     }
 
-    fn recursive_delete(&mut self, node_id: NodeId, key: u64) {
-        let position = self.arena.nodes[node_id]
-            .keys
-            .iter()
-            .position(|&x| x == key);
+    fn recursive_delete(&mut self, id: NodeId, key: u64) {
+        let pos = self.arena.nodes[id].find_key_index(key);
 
         // We are in the leaf node
-        if self.arena.nodes[node_id].is_leaf {
-            match position {
-                Some(index) => {
-                    self.arena.nodes[node_id].keys.remove(index);
-                    self.arena.nodes[node_id].n -= 1;
-                }
-                None => return,
+        if self.arena.nodes[id].is_leaf {
+            if pos == None {
+                return;
             }
+            let k = pos.unwrap();
+            let n = self.arena.nodes[id].n;
+            self.arena.nodes[id].keys.copy_within(k + 1..n, k);
+            self.arena.nodes[id].n -= 1;
             return;
         }
 
         // We are in the internal node
-        match position {
-            Some(index) => {
+        match pos {
+            Some(k) => {
                 // Case 1: key is in the internal node
-                self.delete_from_internal_node(node_id, index);
+                self.delete_from_internal_node(id, k);
             }
             None => {
                 // Case 2: key is not in this node, recurse to child
-                let mut child_index = self.arena.nodes[node_id].find_child_index(key);
-                let mut child_id = self.arena.nodes[node_id].children_ids[child_index];
+                let mut c_k = self.arena.nodes[id].find_child_index(key);
+                let mut c_id = self.arena.nodes[id].children_ids[c_k];
 
-                if self.is_node_underflow(child_id) {
+                if self.is_node_underflow(c_id) {
                     // Child has a minimum number of keys, need to fix before deletion
-                    self.fix_child(node_id, child_index);
+                    self.fix_child(id, c_k);
 
                     // After fixing, the key might have moved, so re-find the child
-                    child_index = self.arena.nodes[node_id].find_child_index(key);
-                    child_id = self.arena.nodes[node_id].children_ids[child_index];
+                    c_k = self.arena.nodes[id].find_child_index(key);
+                    c_id = self.arena.nodes[id].children_ids[c_k];
                 }
 
-                self.recursive_delete(child_id, key);
+                self.recursive_delete(c_id, key);
             }
         }
     }
 
-    fn delete_from_internal_node(&mut self, node_id: NodeId, index: usize) {
-        let key = self.arena.nodes[node_id].keys[index];
-        let left_child_id = self.arena.nodes[node_id].children_ids[index];
-        let right_child_id = self.arena.nodes[node_id].children_ids[index + 1];
+    fn delete_from_internal_node(&mut self, id: NodeId, k: usize) {
+        let key = self.arena.nodes[id].keys[k];
+        let left_child_id = self.arena.nodes[id].children_ids[k];
+        let right_child_id = self.arena.nodes[id].children_ids[k + 1];
 
         if !self.is_node_underflow(left_child_id) {
             // Case 1a: left child has at least t keys
             let predecessor = self.find_predecessor(left_child_id);
-            self.arena.nodes[node_id].keys[index] = predecessor;
+            self.arena.nodes[id].keys[k] = predecessor;
             self.recursive_delete(left_child_id, predecessor);
         } else if !self.is_node_underflow(right_child_id) {
             // Case 1b: right child has at least t keys
             let successor = self.find_successor(right_child_id);
-            self.arena.nodes[node_id].keys[index] = successor;
+            self.arena.nodes[id].keys[k] = successor;
             self.recursive_delete(right_child_id, successor);
         } else {
             // Case 1c: both children have t - 1 keys, merge them
-            self.merge_children(node_id, index);
+            self.merge_children(id, k);
             self.recursive_delete(left_child_id, key); // Key is now in the merged child
         }
     }
 
-    fn find_predecessor(&self, parent_id: NodeId) -> u64 {
+    fn find_predecessor(&self, p_id: NodeId) -> u64 {
         // Find the maximum key in the subtree rooted at parent
-        let mut node_id = parent_id;
+        let mut node_id = p_id;
 
         while !self.arena.nodes[node_id].is_leaf {
             // Rightmost child
@@ -85,9 +91,9 @@ impl Btree {
         self.arena.nodes[node_id].keys[self.arena.nodes[node_id].n - 1]
     }
 
-    fn find_successor(&self, parent_id: NodeId) -> u64 {
+    fn find_successor(&self, p_id: NodeId) -> u64 {
         // Find the minimum key in the subtree rooted at parent
-        let mut node_id = parent_id;
+        let mut node_id = p_id;
 
         while !self.arena.nodes[node_id].is_leaf {
             // Leftmost child
@@ -98,24 +104,32 @@ impl Btree {
         self.arena.nodes[node_id].keys[0]
     }
 
-    fn fix_child(&mut self, parent_id: NodeId, child_index: usize) {
-        let parent = &self.arena.nodes[parent_id];
-        let left_sibling_id = parent.children_ids[child_index - 1];
-        let right_sibling_id = parent.children_ids[child_index + 1];
+    fn fix_child(&mut self, p_id: NodeId, k: usize) {
+        let p = &self.arena.nodes[p_id];
 
-        if child_index > 0 && !self.is_node_underflow(left_sibling_id) {
-            // Case 2a: Left sibling has extra keys, borrow from it
-            self.borrow_from_left_sibling(parent_id, child_index);
-        } else if child_index < parent.n && !self.is_node_underflow(right_sibling_id) {
-            // Case 2b: Right sibling has extra keys, borrow from it
-            self.borrow_from_right_sibling(parent_id, child_index);
-        } else {
-            // Case 2c: Both siblings have minimum keys, merge with a sibling
-            if child_index > 0 {
-                self.merge_children(parent_id, child_index - 1);
-            } else {
-                self.merge_children(parent_id, child_index);
+        if k > 0 {
+            let lc_id = p.children_ids[k - 1];
+            if !self.is_node_underflow(lc_id) {
+                // Case 2a: Left sibling has extra keys, borrow from it
+                self.borrow_from_left_sibling(p_id, k);
+                return;
             }
+        }
+
+        if k < p.n {
+            let rc_id = p.children_ids[k + 1];
+            if !self.is_node_underflow(rc_id) {
+                // Case 2b: Right sibling has extra keys, borrow from it
+                self.borrow_from_right_sibling(p_id, k);
+                return;
+            }
+        }
+
+        // Case 2c: Both siblings have minimum keys, merge with a sibling
+        if k > 0 {
+            self.merge_children(p_id, k - 1);
+        } else {
+            self.merge_children(p_id, k);
         }
     }
 
