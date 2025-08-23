@@ -18,9 +18,11 @@ impl Btree {
             match position {
                 Some(index) => {
                     self.arena.nodes[node_id].keys.remove(index);
+                    self.arena.nodes[node_id].n -= 1; 
                 }
                 None => return,
             }
+            return;
         }
 
         // We are in the internal node
@@ -62,7 +64,7 @@ impl Btree {
             self.recursive_delete(left_child_id, predecessor);
         } else if self.arena.nodes[right_child_id].n >= t {
             // Case 1b: right child has at least t keys
-            let successor = self.find_successor(left_child_id);
+            let successor = self.find_successor(right_child_id);
             self.arena.nodes[node_id].keys[index] = successor;
             self.recursive_delete(right_child_id, successor);
         } else {
@@ -118,11 +120,47 @@ impl Btree {
     }
 
     fn borrow_from_left_sibling(&mut self, parent_id: NodeId, child_index: usize) {
-        todo!();
+        let child_id = self.arena.nodes[parent_id].children_ids[child_index];
+        let left_sibling_id = self.arena.nodes[parent_id].children_ids[child_index - 1];
+
+        // Move parent key down to child
+        let parent_key = self.arena.nodes[parent_id].keys[child_index - 1];
+        self.arena.nodes[child_id].keys.insert(0, parent_key);
+
+        // Move left sibling's last key up to parent
+        let left_sibling_key = self.arena.nodes[left_sibling_id].keys.pop();
+        self.arena.nodes[parent_id].keys[child_index - 1] = left_sibling_key.unwrap();
+
+        // Move left sibling's last child to the current child (if not leaf)
+        if !self.arena.nodes[child_id].leaf {
+            let left_sibling_child_id = self.arena.nodes[left_sibling_id].children_ids.pop();
+            self.arena.nodes[child_id].children_ids.insert(0, left_sibling_child_id.unwrap());
+        }
+
+        self.arena.nodes[child_id].n += 1;
+        self.arena.nodes[left_sibling_id].n -= 1;
     }
     
     fn borrow_from_right_sibling(&mut self, parent_id: NodeId, child_index: usize) {
-        todo!();
+        let child_id = self.arena.nodes[parent_id].children_ids[child_index];
+        let right_sibling_id = self.arena.nodes[parent_id].children_ids[child_index + 1];
+
+        // Move parent key down to child
+        let parent_key = self.arena.nodes[parent_id].keys[child_index];
+        self.arena.nodes[child_id].keys.push(parent_key);
+
+        // Move right sibling's first key up to parent
+        let right_sibling_key = self.arena.nodes[right_sibling_id].keys.remove(0);
+        self.arena.nodes[parent_id].keys[child_index] = right_sibling_key;
+
+        // Move right sibling's first child to the current child (if not leaf)
+        if !self.arena.nodes[child_id].leaf {
+            let right_sibling_child_id = self.arena.nodes[right_sibling_id].children_ids.remove(0);
+            self.arena.nodes[child_id].children_ids.push(right_sibling_child_id);
+        }
+
+        self.arena.nodes[child_id].n += 1;
+        self.arena.nodes[right_sibling_id].n -= 1;
     }
 
     fn merge_children(&mut self, parent_id: NodeId, index: usize) {
