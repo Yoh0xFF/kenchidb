@@ -40,21 +40,21 @@ impl Btree {
         }
     }
 
-    pub(super) fn find_key_index(&self, node_id: NodeId, key: u64) -> Option<usize> {
-        self.arena.nodes[node_id]
-            .keys
-            .iter()
-            .position(|&x| x == key)
+    pub(super) fn is_root(&self, node_id: NodeId) -> bool {
+        node_id == self.root_id
     }
 
-    pub(super) fn find_child_index(&self, node_id: NodeId, key: u64) -> usize {
+    pub(super) fn is_node_full(&self, node_id: NodeId) -> bool {
         let node = &self.arena.nodes[node_id];
-        let mut child_index = 0;
+        node.n == 2 * self.t - 1
+    }
 
-        while child_index < node.n && node.keys[child_index] < key {
-            child_index += 1;
+    pub(super) fn is_node_underflow(&self, node_id: NodeId) -> bool {
+        if self.is_root(node_id) {
+            return false;
         }
 
-        child_index
+        let node = &self.arena.nodes[node_id];
+        node.n == self.t - 1
     }
 }

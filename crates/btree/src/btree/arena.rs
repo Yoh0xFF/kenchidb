@@ -4,9 +4,25 @@ pub type NodeId = usize;
 pub(super) struct BtreeNode {
     pub(super) id: NodeId,                // Node unique id
     pub(super) n: usize,                  // Number of keys currently stored in the node
-    pub(super) is_leaf: bool,                // Indicator of the internal and leaf nodes
-    pub(super) keys: Vec<u64>,            // Node keys in monotonically increasing order key[i] <= key[i + 1]
+    pub(super) is_leaf: bool,             // Indicator of the internal and leaf nodes
+    pub(super) keys: Vec<u64>, // Node keys in monotonically increasing order key[i] <= key[i + 1]
     pub(super) children_ids: Vec<NodeId>, // Node (number_of_keys + 1) pointers to the children
+}
+
+impl BtreeNode {
+    pub(super) fn find_key_index(&self, key: u64) -> Option<usize> {
+        self.keys.iter().position(|&x| x == key)
+    }
+
+    pub(super) fn find_child_index(&self, key: u64) -> usize {
+        let mut child_index = 0;
+
+        while child_index < self.n && self.keys[child_index] < key {
+            child_index += 1;
+        }
+
+        child_index
+    }
 }
 
 #[derive(Debug)]

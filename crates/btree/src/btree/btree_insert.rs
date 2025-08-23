@@ -6,9 +6,7 @@ impl Btree {
     /// O(h) disk access
     /// O(md * h) = O(md * log.md(n)) CPU time
     pub fn insert(&mut self, key: u64) {
-        let t = self.t;
-
-        if self.arena.nodes[self.root_id].n == 2 * t - 1 {
+        if self.is_node_full(self.root_id) {
             let new_root_id = self.split_root();
             self.recursive_insert(new_root_id, key);
         } else {
@@ -44,7 +42,6 @@ impl Btree {
     }
 
     fn insert_into_internal_node(&mut self, node_id: NodeId, key: u64) {
-        let t = self.t;
         let n = self.arena.nodes[node_id].n;
 
         // find the child where the key belongs
@@ -56,7 +53,7 @@ impl Btree {
         }
 
         let child_id = self.arena.nodes[node_id].children_ids[pos];
-        if self.arena.nodes[child_id].n == 2 * t - 1 {
+        if self.is_node_full(child_id) {
             // split the child if it is full
             self.split_child(node_id, pos);
             if key > self.arena.nodes[node_id].keys[pos] {
