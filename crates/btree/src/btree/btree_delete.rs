@@ -143,43 +143,44 @@ impl Btree {
         self.arena.nodes[left_sibling_id].n -= 1;
     }
 
-    fn borrow_from_right_sibling(&mut self, parent_id: NodeId, child_index: usize) {
-        let child_id = self.arena.nodes[parent_id].children_ids[child_index];
-        let right_sibling_id = self.arena.nodes[parent_id].children_ids[child_index + 1];
-
-        // Move parent key down to child
-        let parent_key = self.arena.nodes[parent_id].keys[child_index];
-        self.arena.nodes[child_id].keys.push(parent_key);
-
-        // Move right sibling's first key up to parent
-        let right_sibling_key = self.arena.nodes[right_sibling_id].keys.remove(0);
-        self.arena.nodes[parent_id].keys[child_index] = right_sibling_key;
-
-        // Move right sibling's first child to the current child (if not leaf)
-        if !self.arena.nodes[child_id].is_leaf {
-            let right_sibling_child_id = self.arena.nodes[right_sibling_id].children_ids.remove(0);
-            self.arena.nodes[child_id]
-                .children_ids
-                .push(right_sibling_child_id);
-        }
-
-        self.arena.nodes[child_id].n += 1;
-        self.arena.nodes[right_sibling_id].n -= 1;
-    }
-
-    fn merge_children(&mut self, parent_id: NodeId, index: usize) {
+    fn borrow_from_right_sibling(&mut self, p_id: NodeId, k: usize) {
         let nodes = &mut self.arena.nodes;
 
-        let p_id = parent_id; // parent
-        let lc_id = nodes[p_id].children_ids[index]; // left child
-        let rc_id = nodes[p_id].children_ids[index + 1]; // right child
+        let lc_id = nodes[p_id].children_ids[k]; // left child
+        let rc_id = nodes[p_id].children_ids[k + 1]; // right child
+
+        let lc_n = nodes[lc_id].n;
+        let rc_n = nodes[rc_id].n;
+
+        // Move parent key down to child
+        nodes[lc_id].keys[lc_n] = nodes[p_id].keys[k];
+
+        // Move right sibling's first key up to parent
+        nodes[p_id].keys[k] = nodes[rc_id].keys[0];
+        nodes[rc_id].keys.copy_within(1..rc_n, 0);
+
+        // Move right sibling's first child to the current child (if not leaf)
+        if !nodes[lc_id].is_leaf {
+            nodes[lc_id].children_ids[lc_n + 1] = nodes[rc_id].children_ids[0];
+            nodes[rc_id].children_ids.copy_within(1..=rc_n, 0);
+        }
+
+        nodes[lc_id].n += 1;
+        nodes[rc_id].n -= 1;
+    }
+
+    fn merge_children(&mut self, p_id: NodeId, k: usize) {
+        let nodes = &mut self.arena.nodes;
+
+        let lc_id = nodes[p_id].children_ids[k]; // left child
+        let rc_id = nodes[p_id].children_ids[k + 1]; // right child
 
         let p_n = nodes[p_id].n;
         let lc_n = nodes[lc_id].n;
         let rc_n = nodes[rc_id].n;
 
         // Move the parent key down to the left child
-        nodes[lc_id].keys[lc_n] = nodes[p_id].keys[index];
+        nodes[lc_id].keys[lc_n] = nodes[p_id].keys[k];
 
         // Move all keys from right child to left
         for i in 0..rc_n {
@@ -194,7 +195,7 @@ impl Btree {
         }
 
         // Remove the key and child pointer from the parent
-        for i in index..(p_n - 1) {
+        for i in k..(p_n - 1) {
             nodes[p_id].keys[i] = nodes[p_id].keys[i + 1];
             nodes[p_id].children_ids[i + 1] = nodes[p_id].children_ids[i + 2];
         }
