@@ -119,28 +119,30 @@ impl Btree {
         }
     }
 
-    fn borrow_from_left_sibling(&mut self, parent_id: NodeId, child_index: usize) {
-        let child_id = self.arena.nodes[parent_id].children_ids[child_index];
-        let left_sibling_id = self.arena.nodes[parent_id].children_ids[child_index - 1];
+    fn borrow_from_left_sibling(&mut self, p_id: NodeId, k: usize) {
+        let nodes = &mut self.arena.nodes;
+
+        let rc_id = nodes[p_id].children_ids[k]; // right child
+        let lc_id = nodes[p_id].children_ids[k - 1]; // left child
+
+        let rc_n = nodes[rc_id].n;
+        let lc_n = nodes[lc_id].n;
 
         // Move parent key down to child
-        let parent_key = self.arena.nodes[parent_id].keys[child_index - 1];
-        self.arena.nodes[child_id].keys.insert(0, parent_key);
+        nodes[rc_id].keys.copy_within(0..rc_n, 1);
+        nodes[rc_id].keys[0] = nodes[p_id].keys[k - 1];
 
         // Move left sibling's last key up to parent
-        let left_sibling_key = self.arena.nodes[left_sibling_id].keys.pop();
-        self.arena.nodes[parent_id].keys[child_index - 1] = left_sibling_key.unwrap();
+        nodes[p_id].keys[k - 1] = nodes[lc_id].keys[lc_n - 1];
 
         // Move left sibling's last child to the current child (if not leaf)
-        if !self.arena.nodes[child_id].is_leaf {
-            let left_sibling_child_id = self.arena.nodes[left_sibling_id].children_ids.pop();
-            self.arena.nodes[child_id]
-                .children_ids
-                .insert(0, left_sibling_child_id.unwrap());
+        if !nodes[rc_id].is_leaf {
+            nodes[rc_id].children_ids.copy_within(0..=rc_n, 1);
+            nodes[rc_id].children_ids[0] = nodes[lc_id].children_ids[lc_n];
         }
 
-        self.arena.nodes[child_id].n += 1;
-        self.arena.nodes[left_sibling_id].n -= 1;
+        nodes[rc_id].n += 1;
+        nodes[lc_id].n -= 1;
     }
 
     fn borrow_from_right_sibling(&mut self, p_id: NodeId, k: usize) {
