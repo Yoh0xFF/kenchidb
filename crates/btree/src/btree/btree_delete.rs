@@ -11,7 +11,7 @@ impl Btree {
         // Handle root shrinking
         if nodes[self.root_id].n == 0 && !nodes[self.root_id].is_leaf {
             let old_root = self.root_id;
-            self.root_id = nodes[self.root_id].children_ids[0];
+            self.root_id = nodes[self.root_id].children[0];
             self.arena.deallocate_node(old_root, self.t);
         }
     }
@@ -40,7 +40,7 @@ impl Btree {
             None => {
                 // Case 2: key is not in this node, recurse to child
                 let mut c_k = self.arena.nodes[id].find_child_index(key);
-                let mut c_id = self.arena.nodes[id].children_ids[c_k];
+                let mut c_id = self.arena.nodes[id].children[c_k];
 
                 if self.is_node_underflow(c_id) {
                     // Child has a minimum number of keys, need to fix before deletion
@@ -48,7 +48,7 @@ impl Btree {
 
                     // After fixing, the key might have moved, so re-find the child
                     c_k = self.arena.nodes[id].find_child_index(key);
-                    c_id = self.arena.nodes[id].children_ids[c_k];
+                    c_id = self.arena.nodes[id].children[c_k];
                 }
 
                 self.recursive_delete(c_id, key);
@@ -58,23 +58,23 @@ impl Btree {
 
     fn delete_from_internal_node(&mut self, id: NodeId, k: usize) {
         let key = self.arena.nodes[id].keys[k];
-        let left_child_id = self.arena.nodes[id].children_ids[k];
-        let right_child_id = self.arena.nodes[id].children_ids[k + 1];
+        let lc_id = self.arena.nodes[id].children[k]; // Left child
+        let rc_id = self.arena.nodes[id].children[k + 1]; // right child
 
-        if !self.is_node_underflow(left_child_id) {
+        if !self.is_node_underflow(lc_id) {
             // Case 1a: left child has at least t keys
-            let predecessor = self.find_predecessor(left_child_id);
+            let predecessor = self.find_predecessor(lc_id);
             self.arena.nodes[id].keys[k] = predecessor;
-            self.recursive_delete(left_child_id, predecessor);
-        } else if !self.is_node_underflow(right_child_id) {
+            self.recursive_delete(lc_id, predecessor);
+        } else if !self.is_node_underflow(rc_id) {
             // Case 1b: right child has at least t keys
-            let successor = self.find_successor(right_child_id);
+            let successor = self.find_successor(rc_id);
             self.arena.nodes[id].keys[k] = successor;
-            self.recursive_delete(right_child_id, successor);
+            self.recursive_delete(rc_id, successor);
         } else {
             // Case 1c: both children have t - 1 keys, merge them
             self.merge_children(id, k);
-            self.recursive_delete(left_child_id, key); // Key is now in the merged child
+            self.recursive_delete(lc_id, key); // Key is now in the merged child
         }
     }
 
@@ -84,7 +84,7 @@ impl Btree {
 
         while !self.arena.nodes[node_id].is_leaf {
             // Rightmost child
-            node_id = self.arena.nodes[node_id].children_ids[self.arena.nodes[node_id].n];
+            node_id = self.arena.nodes[node_id].children[self.arena.nodes[node_id].n];
         }
 
         // Last key in leaf
@@ -97,7 +97,7 @@ impl Btree {
 
         while !self.arena.nodes[node_id].is_leaf {
             // Leftmost child
-            node_id = self.arena.nodes[node_id].children_ids[0];
+            node_id = self.arena.nodes[node_id].children[0];
         }
 
         // First key in leaf
@@ -108,7 +108,7 @@ impl Btree {
         let p = &self.arena.nodes[p_id];
 
         if k > 0 {
-            let lc_id = p.children_ids[k - 1];
+            let lc_id = p.children[k - 1];
             if !self.is_node_underflow(lc_id) {
                 // Case 2a: Left sibling has extra keys, borrow from it
                 self.borrow_from_left_sibling(p_id, k);
@@ -117,7 +117,7 @@ impl Btree {
         }
 
         if k < p.n {
-            let rc_id = p.children_ids[k + 1];
+            let rc_id = p.children[k + 1];
             if !self.is_node_underflow(rc_id) {
                 // Case 2b: Right sibling has extra keys, borrow from it
                 self.borrow_from_right_sibling(p_id, k);
@@ -136,8 +136,8 @@ impl Btree {
     fn borrow_from_left_sibling(&mut self, p_id: NodeId, k: usize) {
         let nodes = &mut self.arena.nodes;
 
-        let rc_id = nodes[p_id].children_ids[k]; // right child
-        let lc_id = nodes[p_id].children_ids[k - 1]; // left child
+        let rc_id = nodes[p_id].children[k]; // right child
+        let lc_id = nodes[p_id].children[k - 1]; // left child
 
         let rc_n = nodes[rc_id].n;
         let lc_n = nodes[lc_id].n;
@@ -151,8 +151,8 @@ impl Btree {
 
         // Move left sibling's last child to the current child (if not leaf)
         if !nodes[rc_id].is_leaf {
-            nodes[rc_id].children_ids.copy_within(0..=rc_n, 1);
-            nodes[rc_id].children_ids[0] = nodes[lc_id].children_ids[lc_n];
+            nodes[rc_id].children.copy_within(0..=rc_n, 1);
+            nodes[rc_id].children[0] = nodes[lc_id].children[lc_n];
         }
 
         nodes[rc_id].n += 1;
@@ -162,8 +162,8 @@ impl Btree {
     fn borrow_from_right_sibling(&mut self, p_id: NodeId, k: usize) {
         let nodes = &mut self.arena.nodes;
 
-        let lc_id = nodes[p_id].children_ids[k]; // left child
-        let rc_id = nodes[p_id].children_ids[k + 1]; // right child
+        let lc_id = nodes[p_id].children[k]; // left child
+        let rc_id = nodes[p_id].children[k + 1]; // right child
 
         let lc_n = nodes[lc_id].n;
         let rc_n = nodes[rc_id].n;
@@ -177,8 +177,8 @@ impl Btree {
 
         // Move right sibling's first child to the current child (if not leaf)
         if !nodes[lc_id].is_leaf {
-            nodes[lc_id].children_ids[lc_n + 1] = nodes[rc_id].children_ids[0];
-            nodes[rc_id].children_ids.copy_within(1..=rc_n, 0);
+            nodes[lc_id].children[lc_n + 1] = nodes[rc_id].children[0];
+            nodes[rc_id].children.copy_within(1..=rc_n, 0);
         }
 
         nodes[lc_id].n += 1;
@@ -188,8 +188,8 @@ impl Btree {
     fn merge_children(&mut self, p_id: NodeId, k: usize) {
         let nodes = &mut self.arena.nodes;
 
-        let lc_id = nodes[p_id].children_ids[k]; // left child
-        let rc_id = nodes[p_id].children_ids[k + 1]; // right child
+        let lc_id = nodes[p_id].children[k]; // left child
+        let rc_id = nodes[p_id].children[k + 1]; // right child
 
         let p_n = nodes[p_id].n;
         let lc_n = nodes[lc_id].n;
@@ -206,14 +206,14 @@ impl Btree {
         // Move all children from right child to left
         if !nodes[lc_id].is_leaf {
             for i in 0..=rc_n {
-                nodes[lc_id].children_ids[lc_n + 1 + i] = nodes[rc_id].children_ids[i];
+                nodes[lc_id].children[lc_n + 1 + i] = nodes[rc_id].children[i];
             }
         }
 
         // Remove the key and child pointer from the parent
         for i in k..(p_n - 1) {
             nodes[p_id].keys[i] = nodes[p_id].keys[i + 1];
-            nodes[p_id].children_ids[i + 1] = nodes[p_id].children_ids[i + 2];
+            nodes[p_id].children[i + 1] = nodes[p_id].children[i + 2];
         }
 
         // Update nodes' key numbers

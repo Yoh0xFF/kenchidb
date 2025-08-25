@@ -52,7 +52,7 @@ impl Btree {
             pos += 1;
         }
 
-        let c_id = self.arena.nodes[id].children_ids[pos];
+        let c_id = self.arena.nodes[id].children[pos];
         if self.is_node_full(c_id) {
             // split the child if it is full
             self.split_child(id, pos);
@@ -62,7 +62,7 @@ impl Btree {
             }
         }
 
-        let c_id = self.arena.nodes[id].children_ids[pos];
+        let c_id = self.arena.nodes[id].children[pos];
         self.recursive_insert(c_id, key);
     }
 
@@ -75,7 +75,7 @@ impl Btree {
         // set new root properties
         self.arena.nodes[new_root_id].is_leaf = false;
         self.arena.nodes[new_root_id].n = 0;
-        self.arena.nodes[new_root_id].children_ids[0] = self.root_id;
+        self.arena.nodes[new_root_id].children[0] = self.root_id;
 
         // overwrite the old root and split it
         self.root_id = new_root_id;
@@ -96,7 +96,7 @@ impl Btree {
         // **************************
 
         // Get the child properties
-        let c_id = self.arena.nodes[p_id].children_ids[k];
+        let c_id = self.arena.nodes[p_id].children[k];
         let is_leaf = self.arena.nodes[c_id].is_leaf;
         let median_key = self.arena.nodes[c_id].keys[t - 1];
 
@@ -112,8 +112,8 @@ impl Btree {
         // If not leaf, copy the upper half of the children pointers
         if !is_leaf {
             for i in 0..t {
-                self.arena.nodes[nc_id].children_ids[i] =
-                    self.arena.nodes[c_id].children_ids[i + t];
+                self.arena.nodes[nc_id].children[i] =
+                    self.arena.nodes[c_id].children[i + t];
             }
         }
 
@@ -126,10 +126,10 @@ impl Btree {
 
         // Shift existing children pointers to make room for the new sibling
         for i in (k + 1..=self.arena.nodes[p_id].n).rev() {
-            self.arena.nodes[p_id].children_ids[i + 1] =
-                self.arena.nodes[p_id].children_ids[i];
+            self.arena.nodes[p_id].children[i + 1] =
+                self.arena.nodes[p_id].children[i];
         }
-        self.arena.nodes[p_id].children_ids[k + 1] = nc_id;
+        self.arena.nodes[p_id].children[k + 1] = nc_id;
 
         // Shift existing keys in the parent node to make room for the median key
         for i in (k..self.arena.nodes[p_id].n).rev() {

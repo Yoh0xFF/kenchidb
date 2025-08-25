@@ -24,6 +24,6 @@ impl Btree {
             return None;
         }
 
-        self.recursive_search(node.children_ids[k], key)
+        self.recursive_search(node.children[k], key)
     }
 }

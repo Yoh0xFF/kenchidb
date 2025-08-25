@@ -6,7 +6,7 @@ pub(super) struct BtreeNode {
     pub(super) n: usize,                  // Number of keys currently stored in the node
     pub(super) is_leaf: bool,             // Indicator of the internal and leaf nodes
     pub(super) keys: Vec<u64>, // Node keys in monotonically increasing order key[i] <= key[i + 1]
-    pub(super) children_ids: Vec<NodeId>, // Node (number_of_keys + 1) pointers to the children
+    pub(super) children: Vec<NodeId>, // Node (number_of_keys + 1) pointers to the children
 }
 
 impl BtreeNode {
@@ -50,10 +50,10 @@ impl Arena {
             n: 0,
             is_leaf: true,
             keys: vec![],
-            children_ids: vec![],
+            children: vec![],
         });
         self.nodes[id].keys.resize(2 * t - 1, 0);
-        self.nodes[id].children_ids.resize(2 * t, 0);
+        self.nodes[id].children.resize(2 * t, 0);
         id
     }
 
@@ -63,7 +63,7 @@ impl Arena {
         self.nodes[id].is_leaf = true;
         self.nodes[id].keys.clear();
         self.nodes[id].keys.resize(2 * t - 1, 0);
-        self.nodes[id].children_ids.clear();
-        self.nodes[id].children_ids.resize(2 * t, 0);
+        self.nodes[id].children.clear();
+        self.nodes[id].children.resize(2 * t, 0);
     }
 }
