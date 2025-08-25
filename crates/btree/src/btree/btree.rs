@@ -40,21 +40,21 @@ impl Btree {
         }
     }
 
-    pub(super) fn is_root(&self, node_id: NodeId) -> bool {
-        node_id == self.root_id
+    pub(super) fn is_root(&self, id: NodeId) -> bool {
+        id == self.root_id
     }
 
-    pub(super) fn is_node_full(&self, node_id: NodeId) -> bool {
-        let node = &self.arena.nodes[node_id];
+    pub(super) fn is_node_full(&self, id: NodeId) -> bool {
+        let node = &self.arena.nodes[id];
         node.n == 2 * self.t - 1
     }
 
-    pub(super) fn is_node_underflow(&self, node_id: NodeId) -> bool {
-        if self.is_root(node_id) {
+    pub(super) fn is_node_underflow(&self, id: NodeId) -> bool {
+        if self.is_root(id) {
             return false;
         }
 
-        let node = &self.arena.nodes[node_id];
+        let node = &self.arena.nodes[id];
         node.n == self.t - 1
     }
 }
