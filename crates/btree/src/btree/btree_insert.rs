@@ -33,6 +33,11 @@ impl Btree {
             pos += 1;
         }
 
+        // If the key is already in the leaf, do nothing
+        if self.arena.nodes[id].keys[pos] == key {
+            return;
+        }
+
         // shift keys and insert
         for i in (pos..n).rev() {
             self.arena.nodes[id].keys[i + 1] = self.arena.nodes[id].keys[i];
