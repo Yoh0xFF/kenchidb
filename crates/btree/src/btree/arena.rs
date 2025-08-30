@@ -2,11 +2,20 @@ pub type NodeId = usize;
 
 #[derive(Debug, Clone)]
 pub(super) struct BtreeNode {
-    pub(super) id: NodeId,                // Node unique id
-    pub(super) n: usize,                  // Number of keys currently stored in the node
-    pub(super) is_leaf: bool,             // Indicator of the internal and leaf nodes
-    pub(super) keys: Vec<u64>, // Node keys in monotonically increasing order key[i] <= key[i + 1]
-    pub(super) children: Vec<NodeId>, // Node (number_of_keys + 1) pointers to the children
+    // Node unique id
+    pub(super) id: NodeId,
+
+    // Number of keys currently stored in the node
+    pub(super) n: usize,
+
+    // Indicator of the internal and leaf nodes
+    pub(super) is_leaf: bool,
+
+    // Node keys in monotonically increasing order key[i] <= key[i + 1]
+    pub(super) keys: Vec<u64>,
+
+    // Node (number_of_keys + 1) pointers to the children
+    pub(super) children: Vec<NodeId>,
 }
 
 impl BtreeNode {
@@ -27,7 +36,10 @@ impl BtreeNode {
 
 #[derive(Debug)]
 pub(super) struct Arena {
+    // All nodes in the tree
     pub(super) nodes: Vec<BtreeNode>,
+
+    // List of free node ids which can be reused
     free_list: Vec<NodeId>,
 }
 

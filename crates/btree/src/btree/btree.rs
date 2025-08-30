@@ -17,15 +17,20 @@ use crate::btree::arena::{Arena, NodeId};
 ///
 /// - The higher is (t) of the three, the smaller is its height.
 ///
-/// - The number of disk accesses required for most operations on a BTree 
+/// - The number of disk accesses required for most operations on a BTree
 ///     is proportional to the height of the tree.
 ///
 
 #[derive(Debug)]
 pub struct Btree {
-    pub(super) t: usize,        // Minimum and maximum bounds on the number of keys
-    pub(super) arena: Arena,    // Arena for tree nodes
-    pub(super) root_id: NodeId, // Root of the tree
+    // Minimum and maximum bounds on the number of keys (minimum degree, branching factor)
+    pub(super) t: usize,
+
+    // Arena for tree nodes
+    pub(super) arena: Arena,
+
+    // Root of the tree
+    pub(super) root_id: NodeId,
 }
 
 impl Btree {
