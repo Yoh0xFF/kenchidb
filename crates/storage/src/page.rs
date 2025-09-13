@@ -48,17 +48,24 @@ pub struct PageCore<Key> {
 }
 
 #[derive(Debug)]
-pub enum PageKind<Value> {
+pub enum PageKind<Key, Value> {
     Internal {
+        /// Array of child pages.
+        children: Vec<PageReference<Key, Value>>,
+        /// total number of key-value pairs in this subtree.
+        total_count: u64,
+    },
+    Leaf {
         /// Array holding the actual value objects.
         values: Vec<Value>,
     },
-    Leaf {
-        /// Array of child pages.
-        children: Vec<PageNumber>,
-        /// total number of key-value pairs in ths subtree.
-        total_count: u64,
-    },
+}
+
+#[derive(Debug)]
+pub struct PageReference<Key, Value> {
+    pub position: Option<PagePosition>,
+    pub page: Option<Box<Page<Key, Value>>>,
+    pub count: u64,
 }
 
 #[derive(Debug)]
@@ -66,5 +73,5 @@ pub struct Page<Key, Value> {
     /// Page core fields
     pub core: PageCore<Key>,
     /// Page kind-specific fields
-    pub kind: PageKind<Value>,
+    pub kind: PageKind<Key, Value>,
 }
