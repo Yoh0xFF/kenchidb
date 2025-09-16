@@ -68,6 +68,11 @@ pub struct PageReference<Key, Value> {
     pub count: u64,
 }
 
+/// Pages are the actual data storage units that:
+/// - Contain the B-tree nodes and leaves with keys/values
+/// - Are stored within chunks
+/// - Have positions encoded with chunk ID, offset, length, and type
+/// - Can be cached independently and accessed through the chunk
 #[derive(Debug)]
 pub struct Page<Key, Value> {
     /// Page core fields
