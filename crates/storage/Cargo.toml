@@ -12,10 +12,14 @@ readme.workspace = true
 keywords.workspace = true
 categories.workspace = true
 
-[dependencies]
-bitvec = "1.0.1"
-bytes = "1.10.1"
-
 [lints]
 workspace = true
 
+[dependencies]
+bitvec = { workspace = true }
+bytes = { workspace = true }
+prost = { workspace = true }
+
+[build-dependencies]
+prost-build = { workspace = true }
+protoc-bin-vendored = { workspace = true }
