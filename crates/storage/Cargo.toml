@@ -18,8 +18,3 @@ workspace = true
 [dependencies]
 bitvec = { workspace = true }
 bytes = { workspace = true }
-prost = { workspace = true }
-
-[build-dependencies]
-prost-build = { workspace = true }
-protoc-bin-vendored = { workspace = true }

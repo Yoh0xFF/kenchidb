@@ -24,9 +24,6 @@ serde = "1.0.219"
 serde_yaml = "0.9.33"
 bitvec = "1.0.1"
 bytes = "1.10.1"
-prost = "0.14.1"
-prost-build = "0.14.1"
-protoc-bin-vendored = "3.0.0"
 
 [workspace.lints.rust]
 dead_code = "allow"
