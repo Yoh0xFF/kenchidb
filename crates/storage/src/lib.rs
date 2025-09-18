@@ -3,6 +3,7 @@ mod page;
 mod page_impl;
 mod chunk;
 mod chunk_impl;
+mod chunk_impl_header_footer;
 
 pub fn add(left: u64, right: u64) -> u64 {
     left + right
