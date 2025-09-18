@@ -1,3 +1,5 @@
+use bitvec::prelude::BitVec;
+use bytes::Bytes;
 
 /// Chunks are large storage units that:
 /// - Serve as containers for multiple pages
@@ -5,4 +7,75 @@
 /// - Are the unit of allocation and persistence in the file system
 /// - Can contain up to 67 million pages and be up to 2GB in size
 /// - Have their own headers and footers for metadata
-pub struct Chunk {}
+pub struct Chunk {
+    /// ******************************
+    /// * Core Identity and Location *
+    /// ******************************
+    /// Unique chunk identifier
+    pub id: u32,
+    /// Chunk offset in the file (can change during compaction)
+    pub block: u64,
+    /// length in number of blocks (each block is 4096 bytes)
+    pub length: u32,
+
+    /// *******************
+    /// * Page management *
+    /// *******************
+    /// Total number of pages stored in the chunk
+    pub page_count: u32,
+    /// Number of pages still alive (not deleted) in the latest version
+    pub page_count_live: u32,
+    /// Byte offset for table of contents that maps page numbers to positions
+    pub table_of_content_position: u32,
+    /// Bit set tracking deleted pages (set bit = deleted page)
+    pub occupancy: BitVec,
+
+    /// ****************************
+    /// * Size and Memory Tracking *
+    /// ****************************
+    /// Sum of max length of all pages in the chunk
+    pub max_length: u32,
+    /// Sum of max length of all live pages in the chunk (not deleted)
+    pub max_length_live: u32,
+
+    /// ************************************
+    /// * Garbage Collection and Lifecycle *
+    /// ************************************
+    /// GC priority (0 = needs collection, higher = lower priority)
+    pub collect_priority: u16,
+    /// Time when chunk become unused (in milliseconds since store creation)
+    pub unused: u64,
+    /// Store version when chunk became unused
+    pub unused_at_version: u64,
+    /// number of the live-pinned pages (cannot be evacuated/moved)
+    pub pin_count: u32,
+
+    /// ***************************
+    /// * Versioning and Metadata *
+    /// ***************************
+    /// Version stored in this chunk
+    pub version: u64,
+    /// Creation time (milliseconds since store creation)
+    pub time: u64,
+    /// Position of the root of the layout map
+    pub layout_root_position: u64,
+    /// The last used map id
+    pub map_id: u32,
+    /// Predicted position of the next chunk
+    pub next: u64,
+
+    /// *********************
+    /// * Buffer Management *
+    /// *********************
+    /// ByteBuffer holding serialized content before saving to filestore (allows early page GC)
+    pub buffer: Bytes,
+}
+
+impl Chunk {
+    /// Maximum chunk id (2^26 - 1, about 67 million chunks)
+    pub const MAX_ID: u32 = (1 << 26) - 1;
+    /// Maximum size of the chunk header in bytes
+    pub const MAX_HEADER_LENGTH: u16 = 1024;
+    /// Maximum size of the chunk footer in bytes
+    pub const MAX_FOOTER_LENGTH: u8 = 128;
+}

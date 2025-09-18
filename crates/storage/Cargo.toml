@@ -13,6 +13,9 @@ keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
+bitvec = "1.0.1"
+bytes = "1.10.1"
 
 [lints]
 workspace = true
+
