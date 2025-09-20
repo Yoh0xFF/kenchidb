@@ -95,6 +95,7 @@ impl ChunkHeader {
         let time = read_u64!();
         let layout_root_position = read_u64!();
         let next = read_u64!();
+        let _ = offset; // Explicitly ignore the final offset value
 
         Ok(Self {
             magic,
@@ -121,7 +122,7 @@ impl ChunkFooter {
         todo!()
     }
 
-    pub fn deserialize_footer(bytes: &[u8]) -> Self {
+    pub fn deserialize_footer(_: &[u8]) -> Self {
         todo!()
     }
 
