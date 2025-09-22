@@ -3,40 +3,32 @@ use bytes::Bytes;
 
 /// Chunk header
 /// 64 bytes
-/// !IMPORTANT: Do not change field order
+/// !IMPORTANT: Do not change field order, layout is important
 #[derive(Debug, Copy, Clone)]
 pub struct ChunkHeader {
-    /// 4 byte fields
-    /// 8 fields * 4 bytes = 32 bytes
     pub magic: [u8; 4],
     pub id: u32,
     pub length: u32,
-    pub page_count: u32,
-    pub table_of_content_position: u32,
-    pub max_length: u32,
-    pub pin_count: u32,
-    pub map_id: u32,
-    /// 8 byte fields
-    /// 4 fields * 8 bytes = 32 bytes
     pub version: u64,
     pub time: u64,
+    pub max_length: u32,
+    pub page_count: u32,
+    pub pin_count: u32,
+    pub table_of_content_position: u32,
     pub layout_root_position: u64,
+    pub map_id: u32,
     pub next: u64,
-
 }
 
 /// Chunk footer
 /// 20 bytes
-/// !IMPORTANT: Do not change field order
+/// !IMPORTANT: Do not change field order, layout is important
 #[derive(Debug, Copy, Clone)]
 pub struct ChunkFooter {
-    /// 4 byte fields
-    /// 3 fields * 4 bytes = 12 bytes
     pub id: u32,
     pub length: u32,
-    /// 8 byte fields
-    /// 1 field * 8 bytes = 8 bytes
     pub version: u64,
+    pub checksum: u32,
 }
 
 /// Chunks are large storage units that:

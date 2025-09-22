@@ -1,0 +1,172 @@
+use crate::chunk::{ChunkFooter, ChunkHeader};
+use crate::data_util::get_fletcher32;
+use crate::error::StorageError;
+
+impl ChunkHeader {
+    pub const MAGIC: &'static str = "KNCH";
+    pub const SIZE: usize = 96;
+
+    pub const FIELD_MAGIC_OFFSET: usize = 0;
+    pub const FIELD_ID_OFFSET: usize = 4;
+    pub const FIELD_LENGTH_OFFSET: usize = 8;
+    pub const FIELD_VERSION_OFFSET: usize = 12;
+    pub const FIELD_TIME_OFFSET: usize = 20;
+    pub const FIELD_MAX_LENGTH_OFFSET: usize = 28;
+    pub const FIELD_PAGE_COUNT_OFFSET: usize = 32;
+    pub const FIELD_PIN_COUNT_OFFSET: usize = 36;
+    pub const FIELD_TABLE_OF_CONTENT_POSITION_OFFSET: usize = 40;
+    pub const FIELD_LAYOUT_ROOT_POSITION_OFFSET: usize = 44;
+    pub const FIELD_MAP_ID_OFFSET: usize = 52;
+    pub const FIELD_NEXT_OFFSET: usize = 56;
+    pub const FIELD_END_OFFSET: usize = 64;
+
+    pub fn serialize_header(&self) -> [u8; Self::SIZE] {
+        let mut bytes = [0u8; Self::SIZE];
+
+        bytes[Self::FIELD_MAGIC_OFFSET..Self::FIELD_MAGIC_OFFSET + 4]
+            .copy_from_slice(Self::MAGIC.as_bytes());
+        bytes[Self::FIELD_ID_OFFSET..Self::FIELD_ID_OFFSET + 4]
+            .copy_from_slice(&self.id.to_le_bytes());
+        bytes[Self::FIELD_LENGTH_OFFSET..Self::FIELD_LENGTH_OFFSET + 4]
+            .copy_from_slice(&self.length.to_le_bytes());
+        bytes[Self::FIELD_VERSION_OFFSET..Self::FIELD_VERSION_OFFSET + 8]
+            .copy_from_slice(&self.version.to_le_bytes());
+        bytes[Self::FIELD_TIME_OFFSET..Self::FIELD_TIME_OFFSET + 8]
+            .copy_from_slice(&self.time.to_le_bytes());
+        bytes[Self::FIELD_MAX_LENGTH_OFFSET..Self::FIELD_MAX_LENGTH_OFFSET + 4]
+            .copy_from_slice(&self.max_length.to_le_bytes());
+        bytes[Self::FIELD_PAGE_COUNT_OFFSET..Self::FIELD_PAGE_COUNT_OFFSET + 4]
+            .copy_from_slice(&self.page_count.to_le_bytes());
+        bytes[Self::FIELD_PIN_COUNT_OFFSET..Self::FIELD_PIN_COUNT_OFFSET + 4]
+            .copy_from_slice(&self.pin_count.to_le_bytes());
+        bytes[Self::FIELD_TABLE_OF_CONTENT_POSITION_OFFSET
+            ..Self::FIELD_TABLE_OF_CONTENT_POSITION_OFFSET + 4]
+            .copy_from_slice(&self.table_of_content_position.to_le_bytes());
+        bytes[Self::FIELD_LAYOUT_ROOT_POSITION_OFFSET..Self::FIELD_LAYOUT_ROOT_POSITION_OFFSET + 8]
+            .copy_from_slice(&self.layout_root_position.to_le_bytes());
+        bytes[Self::FIELD_MAP_ID_OFFSET..Self::FIELD_MAP_ID_OFFSET + 4]
+            .copy_from_slice(&self.map_id.to_le_bytes());
+        bytes[Self::FIELD_NEXT_OFFSET..Self::FIELD_NEXT_OFFSET + 8]
+            .copy_from_slice(&self.next.to_le_bytes());
+
+        bytes
+    }
+
+    pub fn deserialize_header(bytes: &[u8]) -> Result<Self, StorageError> {
+        if bytes.len() != Self::SIZE {
+            return Err(StorageError::InvalidChunkHeader(
+                "Invalid chunk header size".to_string(),
+            ));
+        }
+
+        let magic = bytes[Self::FIELD_MAGIC_OFFSET..Self::FIELD_MAGIC_OFFSET + 4]
+            .try_into()
+            .unwrap();
+        let id = read_u32(bytes, Self::FIELD_ID_OFFSET);
+        let length = read_u32(bytes, Self::FIELD_LENGTH_OFFSET);
+        let version = read_u64(bytes, Self::FIELD_VERSION_OFFSET);
+        let time = read_u64(bytes, Self::FIELD_TIME_OFFSET);
+        let max_length = read_u32(bytes, Self::FIELD_MAX_LENGTH_OFFSET);
+        let page_count = read_u32(bytes, Self::FIELD_PAGE_COUNT_OFFSET);
+        let pin_count = read_u32(bytes, Self::FIELD_PIN_COUNT_OFFSET);
+        let table_of_content_position =
+            read_u32(bytes, Self::FIELD_TABLE_OF_CONTENT_POSITION_OFFSET);
+        let layout_root_position = read_u64(bytes, Self::FIELD_LAYOUT_ROOT_POSITION_OFFSET);
+        let map_id = read_u32(bytes, Self::FIELD_MAP_ID_OFFSET);
+        let next = read_u64(bytes, Self::FIELD_NEXT_OFFSET);
+
+        Ok(Self {
+            magic,
+            id,
+            length,
+            version,
+            time,
+            max_length,
+            page_count,
+            pin_count,
+            table_of_content_position,
+            layout_root_position,
+            map_id,
+            next,
+        })
+    }
+}
+
+impl ChunkFooter {
+    pub const MAGIC: &'static str = "KNCH";
+    pub const SIZE: usize = 96;
+
+    pub const FIELD_ID_OFFSET: usize = 0;
+    pub const FIELD_LENGTH_OFFSET: usize = 4;
+    pub const FIELD_VERSION_OFFSET: usize = 8;
+    pub const FIELD_CHECKSUM_OFFSET: usize = 16;
+    pub const FIELD_END_OFFSET: usize = 20;
+
+    pub fn serialize_footer(&self) -> [u8; Self::SIZE] {
+        let mut bytes = [0u8; Self::SIZE];
+
+        bytes[Self::FIELD_ID_OFFSET..Self::FIELD_ID_OFFSET + 4]
+            .copy_from_slice(&self.id.to_le_bytes());
+        bytes[Self::FIELD_LENGTH_OFFSET..Self::FIELD_LENGTH_OFFSET + 4]
+            .copy_from_slice(&self.length.to_le_bytes());
+        bytes[Self::FIELD_VERSION_OFFSET..Self::FIELD_VERSION_OFFSET + 8]
+            .copy_from_slice(&self.version.to_le_bytes());
+        let checksum = get_fletcher32(&bytes, 0, Self::FIELD_CHECKSUM_OFFSET);
+        bytes[Self::FIELD_CHECKSUM_OFFSET..Self::FIELD_CHECKSUM_OFFSET + 4]
+            .copy_from_slice(&checksum.to_le_bytes());
+
+        bytes
+    }
+
+    pub fn deserialize_footer(bytes: &[u8]) -> Result<Self, StorageError> {
+        if bytes.len() != Self::SIZE {
+            return Err(StorageError::InvalidChunkHeader(
+                "Invalid chunk footer size".to_string(),
+            ));
+        }
+
+        let id = read_u32(bytes, Self::FIELD_ID_OFFSET);
+        let length = read_u32(bytes, Self::FIELD_LENGTH_OFFSET);
+        let version = read_u64(bytes, Self::FIELD_VERSION_OFFSET);
+        let checksum = read_u32(bytes, Self::FIELD_CHECKSUM_OFFSET);
+
+        Ok(Self {
+            id,
+            length,
+            version,
+            checksum,
+        })
+    }
+
+    pub fn verify_footer(bytes: &[u8]) -> bool {
+        if bytes.len() != Self::SIZE {
+            return false;
+        }
+
+        let stored_checksum = u32::from_le_bytes(
+            bytes[Self::FIELD_CHECKSUM_OFFSET..Self::FIELD_CHECKSUM_OFFSET + 4]
+                .try_into()
+                .unwrap(),
+        );
+
+        let calculated_checksum = get_fletcher32(bytes, 0, Self::FIELD_CHECKSUM_OFFSET);
+
+        stored_checksum == calculated_checksum
+    }
+}
+
+// Helper functions for reading with automatic offset advancement
+fn read_u32(bytes: &[u8], offset: usize) -> u32 {
+    let value = u32::from_le_bytes(bytes[offset..offset + 4].try_into().unwrap());
+    value
+}
+
+fn read_i32(bytes: &[u8], offset: usize) -> i32 {
+    let value = i32::from_le_bytes(bytes[offset..offset + 4].try_into().unwrap());
+    value
+}
+
+fn read_u64(bytes: &[u8], offset: usize) -> u64 {
+    let value = u64::from_le_bytes(bytes[offset..offset + 8].try_into().unwrap());
+    value
+}

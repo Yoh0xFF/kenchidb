@@ -3,7 +3,7 @@ mod page;
 mod page_impl;
 mod chunk;
 mod chunk_impl;
-mod chunk_impl_header_footer;
+mod chunk_impl_margin;
 mod error;
 mod data_util;
 
