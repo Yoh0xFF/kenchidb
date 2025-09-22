@@ -5,6 +5,9 @@ mod chunk;
 mod chunk_impl;
 mod chunk_impl_header_footer;
 mod error;
+mod data_util;
+
+mod test;
 
 pub fn add(left: u64, right: u64) -> u64 {
     left + right

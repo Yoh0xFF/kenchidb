@@ -34,7 +34,6 @@ pub struct ChunkFooter {
     /// 3 fields * 4 bytes = 12 bytes
     pub id: u32,
     pub length: u32,
-    pub checksum: u32,
     /// 8 byte fields
     /// 1 field * 8 bytes = 8 bytes
     pub version: u64,
