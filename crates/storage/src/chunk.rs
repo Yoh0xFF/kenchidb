@@ -4,6 +4,7 @@ use bytes::Bytes;
 /// Chunk header
 /// 64 bytes
 /// !IMPORTANT: Do not change field order, layout is important
+/// !IMPORTANT: Do not delete existing fields and add new fields only at the end
 #[derive(Debug, Copy, Clone)]
 pub struct ChunkHeader {
     pub magic: [u8; 4],
@@ -23,6 +24,7 @@ pub struct ChunkHeader {
 /// Chunk footer
 /// 20 bytes
 /// !IMPORTANT: Do not change field order, layout is important
+/// !IMPORTANT: Do not delete existing fields and add new fields only at the end
 #[derive(Debug, Copy, Clone)]
 pub struct ChunkFooter {
     pub id: u32,
