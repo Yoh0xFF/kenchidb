@@ -21,6 +21,25 @@ pub struct ChunkHeader {
     pub next: u64,
 }
 
+impl ChunkHeader {
+    pub const MAGIC: &'static str = "KNCH";
+    pub const SIZE: usize = 96;
+
+    pub const FIELD_MAGIC_OFFSET: usize = 0;
+    pub const FIELD_ID_OFFSET: usize = 4;
+    pub const FIELD_LENGTH_OFFSET: usize = 8;
+    pub const FIELD_VERSION_OFFSET: usize = 12;
+    pub const FIELD_TIME_OFFSET: usize = 20;
+    pub const FIELD_MAX_LENGTH_OFFSET: usize = 28;
+    pub const FIELD_PAGE_COUNT_OFFSET: usize = 32;
+    pub const FIELD_PIN_COUNT_OFFSET: usize = 36;
+    pub const FIELD_TABLE_OF_CONTENT_POSITION_OFFSET: usize = 40;
+    pub const FIELD_LAYOUT_ROOT_POSITION_OFFSET: usize = 44;
+    pub const FIELD_MAP_ID_OFFSET: usize = 52;
+    pub const FIELD_NEXT_OFFSET: usize = 56;
+    pub const FIELD_END_OFFSET: usize = 64;
+}
+
 /// Chunk footer
 /// 20 bytes
 /// !IMPORTANT: Do not change field order, layout is important
@@ -31,6 +50,17 @@ pub struct ChunkFooter {
     pub length: u32,
     pub version: u64,
     pub checksum: u32,
+}
+
+impl ChunkFooter {
+    pub const MAGIC: &'static str = "KNCH";
+    pub const SIZE: usize = 96;
+
+    pub const FIELD_ID_OFFSET: usize = 0;
+    pub const FIELD_LENGTH_OFFSET: usize = 4;
+    pub const FIELD_VERSION_OFFSET: usize = 8;
+    pub const FIELD_CHECKSUM_OFFSET: usize = 16;
+    pub const FIELD_END_OFFSET: usize = 20;
 }
 
 /// Chunks are large storage units that:
