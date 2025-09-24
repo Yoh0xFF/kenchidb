@@ -1,74 +1,6 @@
 use bitvec::prelude::BitVec;
 use bytes::Bytes;
 
-/// Chunk header
-/// 64 bytes
-/// !IMPORTANT: Do not change field order, layout is important
-/// !IMPORTANT: Do not delete existing fields and add new fields only at the end
-#[derive(Debug, Copy, Clone)]
-pub struct ChunkHeader {
-    pub magic: [u8; 4],
-    pub id: u32,
-    pub length: u32,
-    pub version: u64,
-    pub time: u64,
-    pub max_length: u32,
-    pub page_count: u32,
-    pub pin_count: u32,
-    pub table_of_content_position: u32,
-    pub layout_root_position: u64,
-    pub map_id: u32,
-    pub next: u64,
-}
-
-impl ChunkHeader {
-    /// Magic keyword for the chunk header
-    pub const MAGIC: &'static str = "KNCH";
-    /// Maximum size of the chunk header
-    /// Currently only 64 bytes are occupied
-    pub const SIZE: usize = 96;
-
-    /// Chunk header field offsets
-    pub const FIELD_MAGIC_OFFSET: usize = 0;
-    pub const FIELD_ID_OFFSET: usize = 4;
-    pub const FIELD_LENGTH_OFFSET: usize = 8;
-    pub const FIELD_VERSION_OFFSET: usize = 12;
-    pub const FIELD_TIME_OFFSET: usize = 20;
-    pub const FIELD_MAX_LENGTH_OFFSET: usize = 28;
-    pub const FIELD_PAGE_COUNT_OFFSET: usize = 32;
-    pub const FIELD_PIN_COUNT_OFFSET: usize = 36;
-    pub const FIELD_TABLE_OF_CONTENT_POSITION_OFFSET: usize = 40;
-    pub const FIELD_LAYOUT_ROOT_POSITION_OFFSET: usize = 44;
-    pub const FIELD_MAP_ID_OFFSET: usize = 52;
-    pub const FIELD_NEXT_OFFSET: usize = 56;
-    pub const FIELD_END_OFFSET: usize = 64;
-}
-
-/// Chunk footer
-/// 20 bytes
-/// !IMPORTANT: Do not change field order, layout is important
-/// !IMPORTANT: Do not delete existing fields and add new fields only at the end
-#[derive(Debug, Copy, Clone)]
-pub struct ChunkFooter {
-    pub id: u32,
-    pub length: u32,
-    pub version: u64,
-    pub checksum: u32,
-}
-
-impl ChunkFooter {
-    /// Maximum size of the chunk header
-    /// Currently only 20 bytes are occupied
-    pub const SIZE: usize = 96;
-
-    /// Chunk header field offsets
-    pub const FIELD_ID_OFFSET: usize = 0;
-    pub const FIELD_LENGTH_OFFSET: usize = 4;
-    pub const FIELD_VERSION_OFFSET: usize = 8;
-    pub const FIELD_CHECKSUM_OFFSET: usize = 16;
-    pub const FIELD_END_OFFSET: usize = 20;
-}
-
 /// Chunks are large storage units that:
 /// - Serve as containers for multiple pages
 /// - Have a minimum size of 4096 bytes (one block) and grow in fixed block increments
@@ -153,4 +85,72 @@ impl Chunk {
     pub const MAX_HEADER_LENGTH: u16 = 1024;
     /// Maximum size of the chunk footer in bytes
     pub const MAX_FOOTER_LENGTH: u8 = 128;
+}
+
+/// Chunk header
+/// 64 bytes
+/// !IMPORTANT: Do not change field order, layout is important
+/// !IMPORTANT: Do not delete existing fields and add new fields only at the end
+#[derive(Debug, Copy, Clone)]
+pub struct ChunkHeader {
+    pub magic: [u8; 4],
+    pub id: u32,
+    pub length: u32,
+    pub version: u64,
+    pub time: u64,
+    pub max_length: u32,
+    pub page_count: u32,
+    pub pin_count: u32,
+    pub table_of_content_position: u32,
+    pub layout_root_position: u64,
+    pub map_id: u32,
+    pub next: u64,
+}
+
+impl ChunkHeader {
+    /// Magic keyword for the chunk header
+    pub const MAGIC: [u8; 4] = *b"KNCH";
+    /// Maximum size of the chunk header
+    /// Currently only 64 bytes are occupied
+    pub const SIZE: usize = 96;
+
+    /// Chunk header field offsets
+    pub const FIELD_MAGIC_OFFSET: usize = 0;
+    pub const FIELD_ID_OFFSET: usize = 4;
+    pub const FIELD_LENGTH_OFFSET: usize = 8;
+    pub const FIELD_VERSION_OFFSET: usize = 12;
+    pub const FIELD_TIME_OFFSET: usize = 20;
+    pub const FIELD_MAX_LENGTH_OFFSET: usize = 28;
+    pub const FIELD_PAGE_COUNT_OFFSET: usize = 32;
+    pub const FIELD_PIN_COUNT_OFFSET: usize = 36;
+    pub const FIELD_TABLE_OF_CONTENT_POSITION_OFFSET: usize = 40;
+    pub const FIELD_LAYOUT_ROOT_POSITION_OFFSET: usize = 44;
+    pub const FIELD_MAP_ID_OFFSET: usize = 52;
+    pub const FIELD_NEXT_OFFSET: usize = 56;
+    pub const FIELD_END_OFFSET: usize = 64;
+}
+
+/// Chunk footer
+/// 20 bytes
+/// !IMPORTANT: Do not change field order, layout is important
+/// !IMPORTANT: Do not delete existing fields and add new fields only at the end
+#[derive(Debug, Copy, Clone)]
+pub struct ChunkFooter {
+    pub id: u32,
+    pub length: u32,
+    pub version: u64,
+    pub checksum: u32,
+}
+
+impl ChunkFooter {
+    /// Maximum size of the chunk header
+    /// Currently only 20 bytes are occupied
+    pub const SIZE: usize = 96;
+
+    /// Chunk header field offsets
+    pub const FIELD_ID_OFFSET: usize = 0;
+    pub const FIELD_LENGTH_OFFSET: usize = 4;
+    pub const FIELD_VERSION_OFFSET: usize = 8;
+    pub const FIELD_CHECKSUM_OFFSET: usize = 16;
+    pub const FIELD_END_OFFSET: usize = 20;
 }

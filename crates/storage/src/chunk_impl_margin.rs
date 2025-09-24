@@ -1,13 +1,57 @@
-use crate::chunk::{ChunkFooter, ChunkHeader};
+use crate::chunk::{Chunk, ChunkFooter, ChunkHeader};
 use crate::data_util::get_fletcher32;
 use crate::error::StorageError;
+
+impl Chunk {
+    pub fn serialize_header(&self) -> [u8; ChunkHeader::SIZE] {
+        let header = ChunkHeader {
+            magic: ChunkHeader::MAGIC,
+            id: self.id,
+            length: self.length,
+            version: self.version,
+            time: self.time,
+            max_length: self.max_length,
+            page_count: self.page_count,
+            pin_count: self.pin_count,
+            table_of_content_position: self.table_of_content_position,
+            layout_root_position: self.layout_root_position,
+            map_id: self.map_id,
+            next: self.next,
+        };
+
+        header.serialize_header()
+    }
+
+    pub fn deserialize_header(bytes: &[u8]) -> Result<ChunkHeader, StorageError> {
+        ChunkHeader::deserialize_header(bytes)
+    }
+
+    pub fn serialize_footer(&self) -> [u8; ChunkFooter::SIZE] {
+        let footer = ChunkFooter {
+            id: self.id,
+            length: self.length,
+            version: self.version,
+            checksum: 0,
+        };
+
+        footer.serialize_footer()
+    }
+
+    pub fn deserialize_footer(bytes: &[u8]) -> Result<ChunkFooter, StorageError> {
+        ChunkFooter::deserialize_footer(bytes)
+    }
+
+    pub fn verify_footer(bytes: &[u8]) -> bool {
+        ChunkFooter::verify_footer(bytes)
+    }
+}
 
 impl ChunkHeader {
     pub fn serialize_header(&self) -> [u8; Self::SIZE] {
         let mut bytes = [0u8; Self::SIZE];
 
         bytes[Self::FIELD_MAGIC_OFFSET..Self::FIELD_MAGIC_OFFSET + 4]
-            .copy_from_slice(Self::MAGIC.as_bytes());
+            .copy_from_slice(Self::MAGIC.as_slice());
         bytes[Self::FIELD_ID_OFFSET..Self::FIELD_ID_OFFSET + 4]
             .copy_from_slice(&self.id.to_le_bytes());
         bytes[Self::FIELD_LENGTH_OFFSET..Self::FIELD_LENGTH_OFFSET + 4]
