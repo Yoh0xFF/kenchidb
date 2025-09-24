@@ -22,9 +22,13 @@ pub struct ChunkHeader {
 }
 
 impl ChunkHeader {
+    /// Magic keyword for the chunk header
     pub const MAGIC: &'static str = "KNCH";
+    /// Maximum size of the chunk header
+    /// Currently only 64 bytes are occupied
     pub const SIZE: usize = 96;
 
+    /// Chunk header field offsets
     pub const FIELD_MAGIC_OFFSET: usize = 0;
     pub const FIELD_ID_OFFSET: usize = 4;
     pub const FIELD_LENGTH_OFFSET: usize = 8;
@@ -53,9 +57,11 @@ pub struct ChunkFooter {
 }
 
 impl ChunkFooter {
-    pub const MAGIC: &'static str = "KNCH";
+    /// Maximum size of the chunk header
+    /// Currently only 20 bytes are occupied
     pub const SIZE: usize = 96;
 
+    /// Chunk header field offsets
     pub const FIELD_ID_OFFSET: usize = 0;
     pub const FIELD_LENGTH_OFFSET: usize = 4;
     pub const FIELD_VERSION_OFFSET: usize = 8;
