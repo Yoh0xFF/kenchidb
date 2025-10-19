@@ -1,6 +1,7 @@
+use std::fs::File;
 
 pub struct FileStore {
-
+    pub file: File,
 }
 
 struct FileStoreHeader {

@@ -1,16 +1,18 @@
-use std::fs::File;
 use crate::error::StorageError;
 use crate::file_store::FileStore;
+use std::fs::File;
 
 impl FileStore {
-    fn open(file_name: String, read_only: bool) -> Result<bool, StorageError> {
+    fn open(file_name: String, read_only: bool) -> Result<Self, StorageError> {
         let file = File::options()
             .read(true)
             .write(!read_only)
             .create(true)
             .open(file_name)?;
 
-        Ok(true)
+        Ok(FileStore {
+            file,
+        })
     }
 
     fn close() {}
