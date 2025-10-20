@@ -1,6 +1,7 @@
 #[derive(Debug)]
 pub enum StorageError {
     InvalidChunkHeader(String),
+    ReadOnly(String),
     IoError(std::io::Error),
 }
 

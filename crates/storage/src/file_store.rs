@@ -1,7 +1,15 @@
 use std::fs::File;
+use std::sync::atomic::AtomicU64;
 
 pub struct FileStore {
     pub file: File,
+    pub size: AtomicU64,
+    pub file_name: String,
+    pub read_only: bool,
+    pub read_count: AtomicU64,
+    pub read_bytes: AtomicU64,
+    pub write_count: AtomicU64,
+    pub write_bytes: AtomicU64,
 }
 
 struct FileStoreHeader {
